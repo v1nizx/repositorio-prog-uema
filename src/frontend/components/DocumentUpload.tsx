@@ -1,0 +1,252 @@
+import { useState } from 'react';
+import { Upload, FileText, X, CheckCircle } from 'lucide-react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import { Alert, AlertDescription } from './ui/alert';
+
+export function DocumentUpload() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    type: '',
+    author: '',
+    sector: '',
+    description: ''
+  });
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+      setUploadSuccess(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Mock upload
+    setTimeout(() => {
+      setUploadSuccess(true);
+      setSelectedFile(null);
+      setFormData({
+        title: '',
+        type: '',
+        author: '',
+        sector: '',
+        description: ''
+      });
+    }, 1500);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFile(e.dataTransfer.files[0]);
+      setUploadSuccess(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-3xl">
+      <div>
+        <h2 className="text-gray-900">Upload de Documentos</h2>
+        <p className="text-gray-600">Adicione novos documentos ao sistema</p>
+      </div>
+
+      {uploadSuccess && (
+        <Alert className="bg-green-50 border-green-200">
+          <CheckCircle className="w-4 h-4 text-green-600" />
+          <AlertDescription className="text-green-800">
+            Documento enviado com sucesso! O versionamento foi aplicado automaticamente.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-400 transition-colors"
+          >
+            {!selectedFile ? (
+              <>
+                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-900 mb-2">
+                  Arraste e solte seu arquivo aqui
+                </p>
+                <p className="text-sm text-gray-500 mb-4">
+                  ou clique para selecionar
+                </p>
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden"
+                  accept=".pdf,.docx,.xlsx"
+                  onChange={handleFileSelect}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  Selecionar Arquivo
+                </Button>
+                <p className="text-xs text-gray-500 mt-4">
+                  Formatos aceitos: PDF, DOCX, XLSX (máx. 50MB)
+                </p>
+              </>
+            ) : (
+              <div className="flex items-center justify-between bg-blue-50 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <FileText className="w-8 h-8 text-blue-600" />
+                  <div className="text-left">
+                    <p className="text-gray-900">{selectedFile.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedFile(null)}
+                  className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+          <h3 className="text-gray-900">Metadados Obrigatórios</h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Título *</Label>
+              <Input
+                id="title"
+                placeholder="Digite o título do documento"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="type">Tipo de Documento *</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value) => setFormData({ ...formData, type: value })}
+                required
+              >
+                <SelectTrigger id="type">
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ppc">PPC</SelectItem>
+                  <SelectItem value="resolucao">Resolução</SelectItem>
+                  <SelectItem value="relatorio">Relatório</SelectItem>
+                  <SelectItem value="ata">Ata</SelectItem>
+                  <SelectItem value="dados">Dados Estatísticos</SelectItem>
+                  <SelectItem value="processo">Processo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="author">Autor *</Label>
+              <Input
+                id="author"
+                placeholder="Nome do autor"
+                value={formData.author}
+                onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="sector">Setor *</Label>
+              <Select
+                value={formData.sector}
+                onValueChange={(value) => setFormData({ ...formData, sector: value })}
+                required
+              >
+                <SelectTrigger id="sector">
+                  <SelectValue placeholder="Selecione o setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="coordenacao-eng">Coordenação de Engenharia</SelectItem>
+                  <SelectItem value="coordenacao-comp">Coordenação de Computação</SelectItem>
+                  <SelectItem value="secretaria">Secretaria Geral</SelectItem>
+                  <SelectItem value="colegiado">Colegiado de Curso</SelectItem>
+                  <SelectItem value="cpa">CPA</SelectItem>
+                  <SelectItem value="registro">Registro Acadêmico</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
+              id="description"
+              placeholder="Adicione uma descrição ou observações sobre o documento"
+              rows={4}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <Button
+            type="submit"
+            disabled={!selectedFile || !formData.title || !formData.type || !formData.author || !formData.sector}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Enviar Documento
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setSelectedFile(null);
+              setFormData({
+                title: '',
+                type: '',
+                author: '',
+                sector: '',
+                description: ''
+              });
+            }}
+          >
+            Cancelar
+          </Button>
+        </div>
+      </form>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="text-blue-900 mb-2">Versionamento Automático</h4>
+        <p className="text-sm text-blue-800">
+          O sistema detecta automaticamente se um documento com o mesmo título já existe e cria uma nova versão, mantendo o histórico completo.
+        </p>
+      </div>
+    </div>
+  );
+}
