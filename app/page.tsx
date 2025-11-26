@@ -1,19 +1,21 @@
-import { useState } from 'react';
-import { Header } from './components/Header';
-import { Sidebar } from './components/Sidebar';
-import { DocumentList } from './components/DocumentList';
-import { DocumentUpload } from './components/DocumentUpload';
-import { PPCManagement } from './components/PPCManagement';
-import { SearchPanel } from './components/SearchPanel';
-import { AccessControl } from './components/AccessControl';
+'use client'
 
-export default function App() {
-  const [currentView, setCurrentView] = useState<'documents' | 'upload' | 'ppc' | 'search' | 'access'>('documents');
+import { useState } from 'react'
+import { Header } from '@/src/components/Header'
+import { Sidebar } from '@/src/components/Sidebar'
+import { DocumentList } from '@/src/components/DocumentList'
+import { DocumentUpload } from '@/src/components/DocumentUpload'
+import { PPCManagement } from '@/src/components/PPCManagement'
+import { SearchPanel } from '@/src/components/SearchPanel'
+import { AccessControl } from '@/src/components/AccessControl'
+
+export default function Home() {
+  const [currentView, setCurrentView] = useState<'documents' | 'upload' | 'ppc' | 'search' | 'access'>('documents')
   const [currentUser] = useState({
     name: 'João Silva',
     role: 'Administrador',
     email: 'joao.silva@universidade.edu.br'
-  });
+  })
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -31,5 +33,5 @@ export default function App() {
         </main>
       </div>
     </div>
-  );
+  )
 }
