@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Upload, FileText, X, CheckCircle } from 'lucide-react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Upload, FileText, X, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -12,10 +14,12 @@ import {
   SelectValue,
 } from './ui/select';
 import { Alert, AlertDescription } from './ui/alert';
+import { useDocumentUpload } from '@/hooks/useDocumentUpload';
 
 export function DocumentUpload() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     type: '',
@@ -24,17 +28,9 @@ export function DocumentUpload() {
     description: ''
   });
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-      setUploadSuccess(false);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Mock upload
-    setTimeout(() => {
+  const { upload, isLoading, error, progress } = useDocumentUpload({
+    onSuccess: () => {
+      setShowSuccessMessage(true);
       setUploadSuccess(true);
       setSelectedFile(null);
       setFormData({
@@ -44,7 +40,47 @@ export function DocumentUpload() {
         sector: '',
         description: ''
       });
-    }, 1500);
+      setTimeout(() => setShowSuccessMessage(false), 5000);
+    },
+    onError: (err) => {
+      console.error('Erro no upload:', err);
+    },
+  });
+
+  useEffect(() => {
+    if (showSuccessMessage) {
+      const timer = setTimeout(() => {
+        setUploadSuccess(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessMessage]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+      setUploadSuccess(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedFile || !formData.title || !formData.type || !formData.author || !formData.sector) {
+      return;
+    }
+
+    try {
+      await upload(selectedFile, {
+        title: formData.title,
+        type: formData.type,
+        author: formData.author,
+        sector: formData.sector,
+        description: formData.description,
+      });
+    } catch (err) {
+      console.error('Erro ao fazer upload:', err);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -59,6 +95,8 @@ export function DocumentUpload() {
     }
   };
 
+  const isFormValid = selectedFile && formData.title && formData.type && formData.author && formData.sector;
+
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
@@ -66,11 +104,20 @@ export function DocumentUpload() {
         <p className="text-gray-600">Adicione novos documentos ao sistema</p>
       </div>
 
-      {uploadSuccess && (
+      {uploadSuccess && showSuccessMessage && (
         <Alert className="bg-green-50 border-green-200">
           <CheckCircle className="w-4 h-4 text-green-600" />
           <AlertDescription className="text-green-800">
             Documento enviado com sucesso! O versionamento foi aplicado automaticamente.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {error && (
+        <Alert className="bg-red-50 border-red-200">
+          <AlertCircle className="w-4 h-4 text-red-600" />
+          <AlertDescription className="text-red-800">
+            {error.message}
           </AlertDescription>
         </Alert>
       )}
@@ -97,11 +144,13 @@ export function DocumentUpload() {
                   className="hidden"
                   accept=".pdf,.docx,.xlsx"
                   onChange={handleFileSelect}
+                  disabled={isLoading}
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => document.getElementById('file-upload')?.click()}
+                  disabled={isLoading}
                 >
                   Selecionar Arquivo
                 </Button>
@@ -110,23 +159,41 @@ export function DocumentUpload() {
                 </p>
               </>
             ) : (
-              <div className="flex items-center justify-between bg-blue-50 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <FileText className="w-8 h-8 text-blue-600" />
-                  <div className="text-left">
-                    <p className="text-gray-900">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between bg-blue-50 rounded-lg p-4">
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-8 h-8 text-blue-600" />
+                    <div className="text-left">
+                      <p className="text-gray-900">{selectedFile.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFile(null)}
+                    disabled={isLoading}
+                    className="p-2 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <X className="w-5 h-5 text-gray-600" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedFile(null)}
-                  className="p-2 hover:bg-blue-100 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
+
+                {isLoading && progress.total > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Enviando...</span>
+                      <span className="text-gray-600">{Math.round(progress.percentage)}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all"
+                        style={{ width: `${progress.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -143,6 +210,7 @@ export function DocumentUpload() {
                 placeholder="Digite o título do documento"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                disabled={isLoading}
                 required
               />
             </div>
@@ -152,7 +220,7 @@ export function DocumentUpload() {
               <Select
                 value={formData.type}
                 onValueChange={(value) => setFormData({ ...formData, type: value })}
-                required
+                disabled={isLoading}
               >
                 <SelectTrigger id="type">
                   <SelectValue placeholder="Selecione o tipo" />
@@ -175,6 +243,7 @@ export function DocumentUpload() {
                 placeholder="Nome do autor"
                 value={formData.author}
                 onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                disabled={isLoading}
                 required
               />
             </div>
@@ -184,7 +253,7 @@ export function DocumentUpload() {
               <Select
                 value={formData.sector}
                 onValueChange={(value) => setFormData({ ...formData, sector: value })}
-                required
+                disabled={isLoading}
               >
                 <SelectTrigger id="sector">
                   <SelectValue placeholder="Selecione o setor" />
@@ -209,6 +278,7 @@ export function DocumentUpload() {
               rows={4}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              disabled={isLoading}
             />
           </div>
         </div>
@@ -216,11 +286,20 @@ export function DocumentUpload() {
         <div className="flex gap-3">
           <Button
             type="submit"
-            disabled={!selectedFile || !formData.title || !formData.type || !formData.author || !formData.sector}
+            disabled={!isFormValid || isLoading}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            <Upload className="w-4 h-4 mr-2" />
-            Enviar Documento
+            {isLoading ? (
+              <>
+                <Loader className="w-4 h-4 mr-2 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Enviar Documento
+              </>
+            )}
           </Button>
           <Button
             type="button"
@@ -235,6 +314,7 @@ export function DocumentUpload() {
                 description: ''
               });
             }}
+            disabled={isLoading}
           >
             Cancelar
           </Button>
