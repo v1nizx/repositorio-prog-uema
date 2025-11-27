@@ -653,9 +653,9 @@ Para suporte, entre em contato com a equipe PROG/UEMA.
 - ✅ Autenticação Firebase
 
 ### Fase 2 - Backend (🚧 Em Progresso)
-- ⏳ Integração com Supabase completa
+- ✅ Integração com Firebase completa
 - ⏳ Autenticação LDAP/AD
-- ⏳ Upload real de arquivos com chunks
+- ✅ Upload real de arquivos com chunks
 - ⏳ Busca full-text otimizada
 
 ### Fase 3 - Avançado (📋 Planejado)
