@@ -57,22 +57,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(uploadedDocument, { status: 201 });
   } catch (error) {
-    console.error('Erro no endpoint de upload:', error);
+    console.error('❌ Erro no endpoint de upload:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Erro ao fazer upload' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET() {
-  try {
-    const documents = await uploadService.getAllDocuments();
-    return NextResponse.json(documents);
-  } catch (error) {
-    console.error('Erro ao obter documentos:', error);
-    return NextResponse.json(
-      { error: 'Erro ao obter documentos' },
       { status: 500 }
     );
   }

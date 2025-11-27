@@ -203,8 +203,8 @@ export function DocumentList() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {doc.urlArquivo && (
-                          <DropdownMenuItem onClick={() => handleDownload(doc.urlArquivo || '', doc.nomeArquivo)}>
+                        {doc.fileUrl && (
+                          <DropdownMenuItem onClick={() => handleDownload(doc.fileUrl || '', doc.nomeArquivo)}>
                             <Download className="w-4 h-4 mr-2" />
                             Download
                           </DropdownMenuItem>
@@ -214,7 +214,7 @@ export function DocumentList() {
                           Arquivar
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => handleDelete(doc.id || '', doc.urlArquivo)}
+                          onClick={() => handleDelete(doc.id || '', doc.fileUrl)}
                           className="text-red-600"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />

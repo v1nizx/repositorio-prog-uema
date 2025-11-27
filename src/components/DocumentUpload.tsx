@@ -199,12 +199,14 @@ export function DocumentUpload() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-          <h3 className="text-gray-900">Metadados Obrigatórios</h3>
+        <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+          <h3 className="text-gray-900 font-semibold">Metadados Obrigatórios</h3>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Título *</Label>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <Label htmlFor="title" className="font-medium text-gray-700">
+                Título *
+              </Label>
               <Input
                 id="title"
                 placeholder="Digite o título do documento"
@@ -212,32 +214,66 @@ export function DocumentUpload() {
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 disabled={isLoading}
                 required
+                className="w-full"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="type">Tipo de Documento *</Label>
-              <Select
-                value={formData.type}
-                onValueChange={(value) => setFormData({ ...formData, type: value })}
-                disabled={isLoading}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ppc">PPC</SelectItem>
-                  <SelectItem value="resolucao">Resolução</SelectItem>
-                  <SelectItem value="relatorio">Relatório</SelectItem>
-                  <SelectItem value="ata">Ata</SelectItem>
-                  <SelectItem value="dados">Dados Estatísticos</SelectItem>
-                  <SelectItem value="processo">Processo</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Select TIPO DE DOCUMENTO corrigido */}
+              <div className="space-y-3">
+                <Label htmlFor="type" className="font-medium text-gray-700">
+                  Tipo de Documento *
+                </Label>
+                <Select
+                  value={formData.type}
+                  onValueChange={(value) => setFormData({ ...formData, type: value })}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="type" className="w-full bg-white">
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  {/* Adicionado bg-white, z-50 e shadow */}
+                  <SelectContent className="bg-white z-50 shadow-xl border border-gray-200">
+                    <SelectItem value="ppc">PPC</SelectItem>
+                    <SelectItem value="resolucao">Resolução</SelectItem>
+                    <SelectItem value="relatorio">Relatório</SelectItem>
+                    <SelectItem value="ata">Ata</SelectItem>
+                    <SelectItem value="dados">Dados Estatísticos</SelectItem>
+                    <SelectItem value="processo">Processo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Select SETOR corrigido */}
+              <div className="space-y-3">
+                <Label htmlFor="sector" className="font-medium text-gray-700">
+                  Setor *
+                </Label>
+                <Select
+                  value={formData.sector}
+                  onValueChange={(value) => setFormData({ ...formData, sector: value })}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger id="sector" className="w-full bg-white">
+                    <SelectValue placeholder="Selecione o setor" />
+                  </SelectTrigger>
+                  {/* Adicionado bg-white, z-50 e shadow */}
+                  <SelectContent className="bg-white z-50 shadow-xl border border-gray-200">
+                    <SelectItem value="coordenacao-eng">Coordenação de Engenharia</SelectItem>
+                    <SelectItem value="coordenacao-comp">Coordenação de Computação</SelectItem>
+                    <SelectItem value="secretaria">Secretaria Geral</SelectItem>
+                    <SelectItem value="colegiado">Colegiado de Curso</SelectItem>
+                    <SelectItem value="cpa">CPA</SelectItem>
+                    <SelectItem value="registro">Registro Acadêmico</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="author">Autor *</Label>
+            <div className="space-y-3">
+              <Label htmlFor="author" className="font-medium text-gray-700">
+                Autor *
+              </Label>
               <Input
                 id="author"
                 placeholder="Nome do autor"
@@ -245,33 +281,15 @@ export function DocumentUpload() {
                 onChange={(e) => setFormData({ ...formData, author: e.target.value })}
                 disabled={isLoading}
                 required
+                className="w-full"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sector">Setor *</Label>
-              <Select
-                value={formData.sector}
-                onValueChange={(value) => setFormData({ ...formData, sector: value })}
-                disabled={isLoading}
-              >
-                <SelectTrigger id="sector">
-                  <SelectValue placeholder="Selecione o setor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="coordenacao-eng">Coordenação de Engenharia</SelectItem>
-                  <SelectItem value="coordenacao-comp">Coordenação de Computação</SelectItem>
-                  <SelectItem value="secretaria">Secretaria Geral</SelectItem>
-                  <SelectItem value="colegiado">Colegiado de Curso</SelectItem>
-                  <SelectItem value="cpa">CPA</SelectItem>
-                  <SelectItem value="registro">Registro Acadêmico</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
+          <div className="space-y-3">
+            <Label htmlFor="description" className="font-medium text-gray-700">
+              Descrição
+            </Label>
             <Textarea
               id="description"
               placeholder="Adicione uma descrição ou observações sobre o documento"
@@ -279,6 +297,7 @@ export function DocumentUpload() {
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               disabled={isLoading}
+              className="w-full"
             />
           </div>
         </div>

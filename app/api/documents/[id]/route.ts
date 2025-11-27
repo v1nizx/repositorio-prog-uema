@@ -53,9 +53,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = params;
-    const body = await request.json().catch(() => ({}));
 
-    await uploadService.deleteDocument(id, body.fileUrl);
+    await uploadService.deleteDocument(id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

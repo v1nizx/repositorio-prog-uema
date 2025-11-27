@@ -1,6 +1,5 @@
-import { storage, firestore } from '@/config/firebase.config';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { collection, addDoc, query, where, getDocs, updateDoc, doc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { firestore } from '@/config/firebase.config';
+import { collection, addDoc, query, where, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 
 export interface UploadDocument {
   id?: string;
@@ -11,11 +10,11 @@ export interface UploadDocument {
   descricao: string;
   nomeArquivo: string;
   tamanhoArq: number;
-  urlArquivo?: string;
   uploadedAt?: Date;
   updatedAt?: Date;
   versao: number;
   status: 'ativo' | 'arquivado';
+  fileUrl?: string;
 }
 
 export interface UploadProgress {
@@ -26,32 +25,38 @@ export interface UploadProgress {
 
 class DocumentUploadService {
   private readonly collectionName = 'documents';
-  private readonly storagePath = 'documents';
+  private readonly CHUNK_SIZE = 900000; // 900KB por chunk (abaixo do limite de 1MB)
 
   /**
-   * Upload um arquivo para o Firebase Storage
+   * Upload um arquivo para o Firestore (dividido em chunks)
    */
   async uploadFile(
     file: File,
-    metadata: Omit<UploadDocument, 'id' | 'fileUrl' | 'uploadedAt' | 'updatedAt'>
+    metadata: Omit<UploadDocument, 'id' | 'uploadedAt' | 'updatedAt'>
   ): Promise<UploadDocument> {
     try {
-      // Criar referência no storage
-      const timestamp = Date.now();
-      const fileNameWithTimestamp = `${timestamp}_${file.name}`;
-      const storageRef = ref(storage, `${this.storagePath}/${fileNameWithTimestamp}`);
+      console.log('📤 Iniciando upload para Firestore:', file.name);
+      
+      // Converter arquivo para base64
+      const arrayBuffer = await file.arrayBuffer();
+      const byteArray = new Uint8Array(arrayBuffer);
+      let binaryString = '';
+      for (let i = 0; i < byteArray.length; i++) {
+        binaryString += String.fromCharCode(byteArray[i]);
+      }
+      const base64 = btoa(binaryString);
+      console.log(`✅ Arquivo convertido para base64 (${Math.round(base64.length / 1024)}KB)`);
 
-      // Fazer upload
-      await uploadBytes(storageRef, file);
+      // Dividir em chunks
+      const chunks = [];
+      for (let i = 0; i < base64.length; i += this.CHUNK_SIZE) {
+        chunks.push(base64.substring(i, i + this.CHUNK_SIZE));
+      }
+      console.log(`📦 Dividido em ${chunks.length} chunk(s)`);
 
-      // Obter URL de download
-      const fileUrl = await getDownloadURL(storageRef);
-
-      // Salvar metadados no Firestore
       const now = new Date();
       const documentData: UploadDocument = {
         ...metadata,
-        urlArquivo: fileUrl,
         nomeArquivo: file.name,
         tamanhoArq: file.size,
         uploadedAt: now,
@@ -59,21 +64,33 @@ class DocumentUploadService {
         status: 'ativo',
       };
 
-      const docRef = await addDoc(
-        collection(firestore, this.collectionName),
-        {
-          ...documentData,
-          uploadedAt: Timestamp.fromDate(now),
-          updatedAt: Timestamp.fromDate(now),
-        }
-      );
+      console.log('💾 Salvando documento no Firestore');
+      const docRef = await addDoc(collection(firestore, this.collectionName), {
+        ...documentData,
+        uploadedAt: now,
+        updatedAt: now,
+        totalChunks: chunks.length,
+      });
+      console.log('✅ Documento criado com ID:', docRef.id);
 
+      // Salvar chunks em subcoleção
+      console.log('📦 Salvando chunks...');
+      const chunksRef = collection(firestore, this.collectionName, docRef.id, 'chunks');
+      for (let i = 0; i < chunks.length; i++) {
+        await addDoc(chunksRef, {
+          index: i,
+          data: chunks[i],
+        });
+        console.log(`  ✅ Chunk ${i + 1}/${chunks.length} salvo`);
+      }
+
+      console.log('✅ Upload concluído!');
       return {
         ...documentData,
         id: docRef.id,
       };
     } catch (error) {
-      console.error('Erro ao fazer upload:', error);
+      console.error('❌ Erro ao fazer upload:', error);
       throw new Error(`Erro ao fazer upload do arquivo: ${error instanceof Error ? error.message : 'Desconhecido'}`);
     }
   }
@@ -96,8 +113,44 @@ class DocumentUploadService {
         } as UploadDocument;
       });
     } catch (error) {
-      console.error('Erro ao obter documentos:', error);
+      console.error('❌ Erro ao obter documentos:', error);
       throw new Error('Erro ao obter documentos');
+    }
+  }
+
+  /**
+   * Obter arquivo decodificado
+   */
+  async getFileContent(docId: string): Promise<{ buffer: ArrayBuffer; name: string } | null> {
+    try {
+      const docRef = doc(firestore, this.collectionName, docId);
+      const docSnap = await getDocs(collection(firestore, this.collectionName, docId, 'chunks'));
+      
+      if (docSnap.empty) return null;
+
+      // Reconstruir arquivo a partir dos chunks
+      const chunks = docSnap.docs
+        .sort((a, b) => a.data().index - b.data().index)
+        .map((d) => d.data().data);
+
+      const base64 = chunks.join('');
+      
+      // Converter base64 para ArrayBuffer
+      const binaryString = atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const doc_data = (await getDocs(collection(firestore, this.collectionName))).docs.find((d) => d.id === docId)?.data();
+
+      return {
+        buffer: bytes.buffer,
+        name: doc_data?.nomeArquivo || 'arquivo',
+      };
+    } catch (error) {
+      console.error('❌ Erro ao obter arquivo:', error);
+      return null;
     }
   }
 
@@ -123,7 +176,7 @@ class DocumentUploadService {
         } as UploadDocument;
       });
     } catch (error) {
-      console.error('Erro ao obter documentos por tipo:', error);
+      console.error('❌ Erro ao obter documentos por tipo:', error);
       throw new Error('Erro ao obter documentos');
     }
   }
@@ -150,7 +203,7 @@ class DocumentUploadService {
         } as UploadDocument;
       });
     } catch (error) {
-      console.error('Erro ao obter documentos por setor:', error);
+      console.error('❌ Erro ao obter documentos por setor:', error);
       throw new Error('Erro ao obter documentos');
     }
   }
@@ -163,10 +216,11 @@ class DocumentUploadService {
       const docRef = doc(firestore, this.collectionName, id);
       await updateDoc(docRef, {
         ...updates,
-        updatedAt: Timestamp.fromDate(new Date()),
+        updatedAt: new Date(),
       });
+      console.log('✅ Documento atualizado:', id);
     } catch (error) {
-      console.error('Erro ao atualizar documento:', error);
+      console.error('❌ Erro ao atualizar documento:', error);
       throw new Error('Erro ao atualizar documento');
     }
   }
@@ -174,24 +228,13 @@ class DocumentUploadService {
   /**
    * Deletar documento
    */
-  async deleteDocument(id: string, fileUrl?: string): Promise<void> {
+  async deleteDocument(id: string): Promise<void> {
     try {
-      // Deletar arquivo do storage
-      if (fileUrl) {
-        try {
-          const fileRef = ref(storage, fileUrl);
-          await deleteObject(fileRef);
-        } catch (storageError) {
-          console.warn('Erro ao deletar arquivo do storage:', storageError);
-          // Continuar mesmo se não conseguir deletar o arquivo
-        }
-      }
-
-      // Deletar metadados do Firestore
       const docRef = doc(firestore, this.collectionName, id);
       await deleteDoc(docRef);
+      console.log('✅ Documento deletado:', id);
     } catch (error) {
-      console.error('Erro ao deletar documento:', error);
+      console.error('❌ Erro ao deletar documento:', error);
       throw new Error('Erro ao deletar documento');
     }
   }
@@ -204,10 +247,11 @@ class DocumentUploadService {
       const docRef = doc(firestore, this.collectionName, id);
       await updateDoc(docRef, {
         status: 'arquivado',
-        updatedAt: Timestamp.fromDate(new Date()),
+        updatedAt: new Date(),
       });
+      console.log('✅ Documento arquivado:', id);
     } catch (error) {
-      console.error('Erro ao arquivar documento:', error);
+      console.error('❌ Erro ao arquivar documento:', error);
       throw new Error('Erro ao arquivar documento');
     }
   }
@@ -218,12 +262,13 @@ class DocumentUploadService {
   async searchDocuments(searchTerm: string): Promise<UploadDocument[]> {
     try {
       const allDocs = await this.getAllDocuments();
-      return allDocs.filter((doc) =>
-        doc.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doc.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+      return allDocs.filter(
+        (doc) =>
+          doc.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          doc.descricao.toLowerCase().includes(searchTerm.toLowerCase())
       );
     } catch (error) {
-      console.error('Erro ao buscar documentos:', error);
+      console.error('❌ Erro ao buscar documentos:', error);
       throw new Error('Erro ao buscar documentos');
     }
   }
@@ -234,21 +279,21 @@ class DocumentUploadService {
   async incrementVersion(id: string): Promise<void> {
     try {
       const docRef = doc(firestore, this.collectionName, id);
-      const currentDoc = (await getDocs(query(collection(firestore, this.collectionName)))).docs.find(
-        (d) => d.id === id
-      );
+      const currentDoc = (await getDocs(collection(firestore, this.collectionName))).docs.find((d) => d.id === id);
 
       const currentVersion = currentDoc?.data().version || 0;
 
       await updateDoc(docRef, {
         version: currentVersion + 1,
-        updatedAt: Timestamp.fromDate(new Date()),
+        updatedAt: new Date(),
       });
+      console.log('✅ Versão incrementada:', id);
     } catch (error) {
-      console.error('Erro ao incrementar versão:', error);
+      console.error('❌ Erro ao incrementar versão:', error);
       throw new Error('Erro ao incrementar versão');
     }
   }
 }
 
 export default new DocumentUploadService();
+

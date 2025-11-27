@@ -6,7 +6,7 @@ export async function GET() {
     const documents = await uploadService.getAllDocuments();
     return NextResponse.json(documents);
   } catch (error) {
-    console.error('Erro ao obter documentos:', error);
+    console.error('❌ Erro ao obter documentos:', error);
     return NextResponse.json(
       { error: 'Erro ao obter documentos' },
       { status: 500 }

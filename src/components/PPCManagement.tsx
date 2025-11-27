@@ -1,9 +1,8 @@
-import { useState } from 'react';
-import { BookOpen, GitCompare, FileText, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+'use client';
+
+import { useEffect } from 'react';
+import { FileText, Download, Trash2, Archive, Loader } from 'lucide-react';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import {
   Table,
   TableBody,
@@ -12,81 +11,43 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
-
-const mockPPCs = [
-  {
-    id: 1,
-    course: 'Engenharia da Computação',
-    currentVersion: '3.2',
-    lastUpdate: '2024-03-15',
-    status: 'Atualizado',
-    nextReview: '2025-03-15',
-    versions: [
-      { version: '3.2', date: '2024-03-15', author: 'Prof. Reinaldo', status: 'Aprovado' },
-      { version: '3.1', date: '2023-09-10', author: 'Prof. Pedro Brandão', status: 'Aprovado' },
-      { version: '3.0', date: '2023-03-01', author: 'Prof. Antonio Jacob', status: 'Aprovado' }
-    ]
-  },
-  {
-    id: 2,
-    course: 'Engenharia Mecanica',
-    currentVersion: '4.0',
-    lastUpdate: '2024-03-10',
-    status: 'Em Revisão',
-    nextReview: '2025-03-10',
-    versions: [
-      { version: '4.0', date: '2024-03-10', author: 'Prof. Carlos Oliveira', status: 'Em Revisão' },
-      { version: '3.5', date: '2023-08-20', author: 'Prof. Carlos Oliveira', status: 'Aprovado' },
-      { version: '3.0', date: '2022-03-15', author: 'Prof. Ana Silva', status: 'Aprovado' }
-    ]
-  },
-  {
-    id: 3,
-    course: 'Engenharia Civil',
-    currentVersion: '2.8',
-    lastUpdate: '2023-11-20',
-    status: 'Pendente',
-    nextReview: '2024-11-20',
-    versions: [
-      { version: '2.8', date: '2023-11-20', author: 'Prof. Roberto Lima', status: 'Aprovado' },
-      { version: '2.5', date: '2023-03-10', author: 'Prof. Roberto Lima', status: 'Aprovado' }
-    ]
-  }
-];
+import { Button } from './ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { usePPCManagement } from '@/hooks/usePPCManagement';
 
 export function PPCManagement() {
-  const [selectedPPC, setSelectedPPC] = useState(mockPPCs[0]);
-  const [compareMode, setCompareMode] = useState(false);
-  const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
+  const { ppcs, isLoading, error, fetchPPCs, deletePPC, archivePPC } = usePPCManagement();
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Atualizado':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'Em Revisão':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Pendente':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+  useEffect(() => {
+    fetchPPCs();
+  }, [fetchPPCs]);
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja deletar este PPC?')) {
+      try {
+        await deletePPC(id);
+      } catch (err) {
+        console.error('Erro ao deletar:', err);
+      }
     }
   };
 
-  const handleVersionSelect = (version: string) => {
-    if (selectedVersions.includes(version)) {
-      setSelectedVersions(selectedVersions.filter(v => v !== version));
-    } else if (selectedVersions.length < 2) {
-      setSelectedVersions([...selectedVersions, version]);
+  const handleArchive = async (id: string) => {
+    try {
+      await archivePPC(id);
+    } catch (err) {
+      console.error('Erro ao arquivar:', err);
     }
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-gray-900">Gestão de PPCs</h2>
+        <h2 className="text-3xl font-bold text-gray-900">Gestão de PPCs</h2>
         <p className="text-gray-600">Projetos Pedagógicos de Curso</p>
       </div>
 
+      {/* Estatísticas */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-3">
@@ -94,21 +55,21 @@ export function PPCManagement() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <BookOpen className="w-8 h-8 text-blue-600" />
-              <span className="text-gray-900">{mockPPCs.length}</span>
+              <FileText className="w-8 h-8 text-blue-600" />
+              <span className="text-3xl font-bold text-gray-900">{ppcs.length}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Atualizados</CardTitle>
+            <CardTitle className="text-sm text-gray-600">Ativos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-              <span className="text-gray-900">
-                {mockPPCs.filter(p => p.status === 'Atualizado').length}
+              <FileText className="w-8 h-8 text-green-600" />
+              <span className="text-3xl font-bold text-gray-900">
+                {ppcs.filter(p => p.status === 'ativo').length}
               </span>
             </div>
           </CardContent>
@@ -116,188 +77,131 @@ export function PPCManagement() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-gray-600">Pendentes</CardTitle>
+            <CardTitle className="text-sm text-gray-600">Arquivados</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-8 h-8 text-red-600" />
-              <span className="text-gray-900">
-                {mockPPCs.filter(p => p.status === 'Pendente').length}
+              <Archive className="w-8 h-8 text-gray-600" />
+              <span className="text-3xl font-bold text-gray-900">
+                {ppcs.filter(p => p.status === 'arquivado').length}
               </span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="list" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="list">Lista de PPCs</TabsTrigger>
-          <TabsTrigger value="versions">Histórico de Versões</TabsTrigger>
-          <TabsTrigger value="compare">Comparação</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="list" className="space-y-4">
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Curso</TableHead>
-                  <TableHead>Versão Atual</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Última Atualização</TableHead>
-                  <TableHead>Próxima Revisão</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockPPCs.map((ppc) => (
-                  <TableRow key={ppc.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          <BookOpen className="w-5 h-5 text-blue-600" />
-                        </div>
-                        <p className="text-gray-900">{ppc.course}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-600">v{ppc.currentVersion}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={getStatusColor(ppc.status)}>
-                        {ppc.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="w-4 h-4" />
-                        {new Date(ppc.lastUpdate).toLocaleDateString('pt-BR')}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-gray-600">
-                        {new Date(ppc.nextReview).toLocaleDateString('pt-BR')}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedPPC(ppc)}
-                      >
-                        Ver Detalhes
-                      </Button>
-                    </TableCell>
+      {/* Lista de PPCs */}
+      <Card>
+        <CardHeader>
+          <CardTitle>PPCs Registrados</CardTitle>
+          <CardDescription>
+            Lista de todos os Projetos Pedagógicos de Curso
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+              {error.message}
+            </div>
+          ) : ppcs.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              Nenhum PPC registrado. Faça upload de um arquivo de tipo "PPC" para começar.
+            </div>
+          ) : (
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome do Arquivo</TableHead>
+                    <TableHead>Título</TableHead>
+                    <TableHead>Setor</TableHead>
+                    <TableHead>Autor</TableHead>
+                    <TableHead>Data de Upload</TableHead>
+                    <TableHead>Versão</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="versions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Versões - {selectedPPC.course}</CardTitle>
-              <CardDescription>
-                Todas as versões registradas do PPC
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {selectedPPC.versions.map((version, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex flex-col items-center">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-blue-600" />
+                </TableHeader>
+                <TableBody>
+                  {ppcs.map((ppc) => (
+                    <TableRow key={ppc.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-900 font-medium truncate max-w-xs">
+                            {ppc.nomeArquivo}
+                          </span>
                         </div>
-                        {index !== selectedPPC.versions.length - 1 && (
-                          <div className="w-0.5 h-8 bg-gray-200 mt-2"></div>
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-3 mb-1">
-                          <p className="text-gray-900">Versão {version.version}</p>
-                          <Badge variant="outline" className={getStatusColor(version.status)}>
-                            {version.status}
-                          </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-600">{ppc.titulo}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{ppc.setor}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-600">{ppc.autor}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-600">
+                          {ppc.uploadedAt
+                            ? new Date(ppc.uploadedAt).toLocaleDateString('pt-BR')
+                            : '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium text-gray-900">
+                          v{ppc.versao}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={
+                            ppc.status === 'ativo'
+                              ? 'bg-green-50 text-green-700 border-green-200'
+                              : 'bg-gray-50 text-gray-700 border-gray-200'
+                          }
+                        >
+                          {ppc.status === 'ativo' ? 'Ativo' : 'Arquivado'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {ppc.status === 'ativo' && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleArchive(ppc.id!)}
+                                title="Arquivar"
+                              >
+                                <Archive className="w-4 h-4 text-gray-500" />
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(ppc.id!)}
+                            title="Deletar"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {version.author} · {new Date(version.date).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        Visualizar
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Baixar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="compare" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Comparação de Versões - {selectedPPC.course}</CardTitle>
-              <CardDescription>
-                Selecione duas versões para comparar (máximo 2)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {selectedPPC.versions.map((version, index) => (
-                  <div
-                    key={index}
-                    onClick={() => handleVersionSelect(version.version)}
-                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                      selectedVersions.includes(version.version)
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-gray-900">Versão {version.version}</p>
-                      {selectedVersions.includes(version.version) && (
-                        <CheckCircle className="w-5 h-5 text-blue-600" />
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      {new Date(version.date).toLocaleDateString('pt-BR')}
-                    </p>
-                    <p className="text-sm text-gray-600">{version.author}</p>
-                  </div>
-                ))}
-              </div>
-
-              {selectedVersions.length === 2 && (
-                <div className="pt-4 border-t border-gray-200">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    <GitCompare className="w-4 h-4 mr-2" />
-                    Comparar Versões {selectedVersions[0]} e {selectedVersions[1]}
-                  </Button>
-                </div>
-              )}
-
-              {selectedVersions.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  Selecione duas versões para comparar
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

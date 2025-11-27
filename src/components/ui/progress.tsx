@@ -9,7 +9,7 @@ function Progress({
   className,
   value,
   ...props
-}: React.ComponentProps<'div'>) {
+}: React.ComponentProps<'div'> & { value?: number }) {
   return (
     <div
       data-slot="progress"

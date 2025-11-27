@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Shield, UserPlus, Eye, Lock, Activity } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, UserPlus, Eye, Lock, Activity, Loader } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
@@ -28,99 +28,12 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import { Label } from './ui/label';
+import { useAccessControl } from '@/hooks/useAccessControl';
 
-const mockUsers = [
-  {
-    id: 1,
-    name: 'João Silva',
-    email: 'joao.silva@universidade.edu.br',
-    role: 'Administrador',
-    department: 'TI',
-    lastAccess: '2024-03-20 14:30',
-    status: 'Ativo'
-  },
-  {
-    id: 2,
-    name: 'Maria Santos',
-    email: 'maria.santos@universidade.edu.br',
-    role: 'Editor',
-    department: 'Coordenação de Engenharia',
-    lastAccess: '2024-03-20 10:15',
-    status: 'Ativo'
-  },
-  {
-    id: 3,
-    name: 'Carlos Oliveira',
-    email: 'carlos.oliveira@universidade.edu.br',
-    role: 'Editor',
-    department: 'Coordenação de Computação',
-    lastAccess: '2024-03-19 16:45',
-    status: 'Ativo'
-  },
-  {
-    id: 4,
-    name: 'Ana Costa',
-    email: 'ana.costa@universidade.edu.br',
-    role: 'Consultor',
-    department: 'Secretaria Geral',
-    lastAccess: '2024-03-18 09:20',
-    status: 'Ativo'
-  },
-  {
-    id: 5,
-    name: 'Pedro Lima',
-    email: 'pedro.lima@universidade.edu.br',
-    role: 'Consultor',
-    department: 'CPA',
-    lastAccess: '2024-03-15 11:00',
-    status: 'Inativo'
-  }
-];
 
-const mockAccessLogs = [
-  {
-    id: 1,
-    user: 'João Silva',
-    action: 'Visualizou',
-    document: 'PPC - Engenharia de Software 2024',
-    timestamp: '2024-03-20 14:30:25',
-    ip: '192.168.1.100'
-  },
-  {
-    id: 2,
-    user: 'Maria Santos',
-    action: 'Editou',
-    document: 'PPC - Engenharia de Software 2024',
-    timestamp: '2024-03-20 10:15:42',
-    ip: '192.168.1.101'
-  },
-  {
-    id: 3,
-    user: 'Carlos Oliveira',
-    action: 'Upload',
-    document: 'PPC - Ciência da Computação 2024',
-    timestamp: '2024-03-19 16:45:18',
-    ip: '192.168.1.102'
-  },
-  {
-    id: 4,
-    user: 'Ana Costa',
-    action: 'Baixou',
-    document: 'Resolução 045/2024',
-    timestamp: '2024-03-18 09:20:33',
-    ip: '192.168.1.103'
-  },
-  {
-    id: 5,
-    user: 'João Silva',
-    action: 'Excluiu',
-    document: 'Ata Rascunho - Janeiro 2024',
-    timestamp: '2024-03-17 15:10:05',
-    ip: '192.168.1.100'
-  }
-];
 
 export function AccessControl() {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -128,12 +41,21 @@ export function AccessControl() {
     department: ''
   });
 
+  const { users, isLoading, fetchUsers } = useAccessControl();
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
   const getRoleColor = (role: string) => {
     switch (role) {
+      case 'admin':
       case 'Administrador':
         return 'bg-red-100 text-red-800 border-red-200';
+      case 'coordenador':
       case 'Editor':
         return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'usuario':
       case 'Consultor':
         return 'bg-green-100 text-green-800 border-green-200';
       default:
@@ -163,7 +85,7 @@ export function AccessControl() {
           <h2 className="text-gray-900">Controle de Acesso</h2>
           <p className="text-gray-600">Gerenciamento de usuários e permissões</p>
         </div>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
               <UserPlus className="w-4 h-4 mr-2" />
@@ -219,7 +141,14 @@ export function AccessControl() {
                   onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
                 />
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  // TODO: Criar usuário no backend
+                  setNewUser({ name: '', email: '', role: '', department: '' });
+                  setIsDialogOpen(false);
+                }}
+              >
                 Criar Usuário
               </Button>
             </div>
@@ -235,7 +164,7 @@ export function AccessControl() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Total de Usuários</p>
-              <p className="text-gray-900">{mockUsers.length}</p>
+              <p className="text-gray-900">{users.length}</p>
             </div>
           </div>
         </div>
@@ -246,9 +175,9 @@ export function AccessControl() {
               <Eye className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Usuários Ativos</p>
+              <p className="text-sm text-gray-600">Administradores</p>
               <p className="text-gray-900">
-                {mockUsers.filter(u => u.status === 'Ativo').length}
+                {users.filter(u => u.role === 'admin').length}
               </p>
             </div>
           </div>
@@ -260,8 +189,10 @@ export function AccessControl() {
               <Activity className="w-6 h-6 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Ações Hoje</p>
-              <p className="text-gray-900">{mockAccessLogs.length}</p>
+              <p className="text-sm text-gray-600">Coordenadores</p>
+              <p className="text-gray-900">
+                {users.filter(u => u.role === 'coordenador').length}
+              </p>
             </div>
           </div>
         </div>
@@ -276,59 +207,55 @@ export function AccessControl() {
 
         <TabsContent value="users">
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Perfil</TableHead>
-                  <TableHead>Departamento</TableHead>
-                  <TableHead>Último Acesso</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <p className="text-gray-900">{user.name}</p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-gray-600">{user.email}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={getRoleColor(user.role)}>
-                        {user.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-gray-600">{user.department}</p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-gray-600">{user.lastAccess}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={
-                          user.status === 'Ativo'
-                            ? 'bg-green-100 text-green-800 border-green-200'
-                            : 'bg-gray-100 text-gray-800 border-gray-200'
-                        }
-                      >
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="outline" size="sm">
-                        Editar
-                      </Button>
-                    </TableCell>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader className="w-6 h-6 animate-spin text-gray-400" />
+              </div>
+            ) : users.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                Nenhum usuário encontrado.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Perfil</TableHead>
+                    <TableHead>Criado em</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <p className="text-gray-900">{user.name}</p>
+                        <p className="text-xs text-gray-500">@{user.username}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-gray-600">{user.email}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={getRoleColor(user.role)}>
+                          {user.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-gray-600">
+                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString('pt-BR') : 'N/A'}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="outline" size="sm">
+                          Editar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </div>
         </TabsContent>
 
@@ -344,29 +271,6 @@ export function AccessControl() {
                   <TableHead>IP</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {mockAccessLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      <p className="text-gray-900">{log.user}</p>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={getActionColor(log.action)}>
-                        {log.action}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-gray-600">{log.document}</p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-gray-600">{log.timestamp}</p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-gray-600">{log.ip}</p>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
             </Table>
           </div>
         </TabsContent>
