@@ -10,11 +10,11 @@ import { getAuth } from 'firebase/auth';
 // 3. Isso vai forçar o sistema a usar a chave direta, ignorando as variáveis de ambiente bugadas.
 // LEMBRE-SE DE REMOVER ISSO DEPOIS QUE FUNCIONAR!
 
-// const hardcodedKey = 'SUA_CHAVE_AIzaSyD_AQUI';
+ const hardcodedKey = "AIzaSyCJjCYc-c6PaSsb7jOLeCgo8G26mEacZOY";
 
 const firebaseConfig = {
   // Se você descomentou a linha acima, mude para: apiKey: hardcodedKey,
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY, 
+  apiKey: hardcodedKey, 
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
