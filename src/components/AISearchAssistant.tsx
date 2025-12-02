@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Sparkles, Brain, Database, FileText, ArrowRight, Copy, Check } from 'lucide-react';
+import { Sparkles, Brain, Database, FileText, ArrowRight, Copy, Check, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Alert, AlertDescription } from './ui/alert';
+import { analyzeQueryWithGemini, generateSearchResults } from '@/services/gemini.service';
 
 interface QueryAnalysis {
   interpretation: string;
@@ -47,326 +48,34 @@ export function AISearchAssistant() {
   const [analysis, setAnalysis] = useState<QueryAnalysis | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [sqlCopied, setSqlCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const analyzeQuery = async () => {
     if (!query.trim()) return;
 
     setIsAnalyzing(true);
+    setError(null);
 
-    // Simular processamento de IA
-    setTimeout(() => {
-      const mockAnalysis = generateMockAnalysis(query);
-      setAnalysis(mockAnalysis);
+    try {
+      const analysisResult = await analyzeQueryWithGemini(query);
+      const searchResults = await generateSearchResults(analysisResult);
+
+      const finalAnalysis: QueryAnalysis = {
+        interpretation: analysisResult.interpretation,
+        entities: analysisResult.entities,
+        filters: analysisResult.filters,
+        sqlQuery: analysisResult.sqlQuery,
+        results: searchResults || [],
+      };
+
+      setAnalysis(finalAnalysis);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao analisar consulta';
+      setError(`Erro ao processar sua busca: ${errorMessage}`);
+      console.error('Erro na análise:', err);
+    } finally {
       setIsAnalyzing(false);
-    }, 1500);
-  };
-
-  const generateMockAnalysis = (userQuery: string): QueryAnalysis => {
-    const lowerQuery = userQuery.toLowerCase();
-
-    // Análise baseada em padrões comuns
-    if (lowerQuery.includes('últimos 6 meses') || lowerQuery.includes('6 meses')) {
-      return {
-        interpretation: 'Busca por Projetos Pedagógicos de Curso (PPCs) que foram atualizados nos últimos 6 meses, considerando a data atual como referência.',
-        entities: {
-          documentTypes: ['PPC'],
-          dateRange: 'Últimos 6 meses',
-          keywords: ['atualizados', 'PPCs']
-        },
-        filters: [
-          { label: 'Tipo de Documento', value: 'PPC' },
-          { label: 'Período', value: 'Últimos 6 meses (Set 2024 - Mar 2025)' },
-          { label: 'Ordenação', value: 'Data de atualização (mais recente)' }
-        ],
-        sqlQuery: `SELECT 
-  d.id,
-  d.titulo,
-  d.tipo,
-  d.data_atualizacao,
-  d.autor,
-  d.setor,
-  d.versao,
-  d.status,
-  c.nome_curso
-FROM documentos d
-LEFT JOIN cursos c ON d.curso_id = c.id
-WHERE d.tipo = 'PPC'
-  AND d.data_atualizacao >= CURRENT_DATE - INTERVAL '6 months'
-ORDER BY d.data_atualizacao DESC;`,
-        results: [
-          {
-            id: 1,
-            title: 'PPC - Engenharia de Software 2024',
-            type: 'PPC',
-            course: 'Engenharia de Software',
-            date: '2024-03-15',
-            author: 'Prof. Maria Santos',
-            sector: 'Coordenação de Engenharia',
-            version: '3.2',
-            status: 'Aprovado'
-          },
-          {
-            id: 2,
-            title: 'PPC - Ciência da Computação 2024',
-            type: 'PPC',
-            course: 'Ciência da Computação',
-            date: '2024-03-10',
-            author: 'Prof. Carlos Oliveira',
-            sector: 'Coordenação de Computação',
-            version: '4.0',
-            status: 'Em Revisão'
-          },
-          {
-            id: 3,
-            title: 'PPC - Sistemas de Informação 2023',
-            type: 'PPC',
-            course: 'Sistemas de Informação',
-            date: '2023-11-20',
-            author: 'Prof. Roberto Lima',
-            sector: 'Coordenação de Computação',
-            version: '2.8',
-            status: 'Aprovado'
-          }
-        ]
-      };
     }
-
-    if (lowerQuery.includes('resolução') && lowerQuery.includes('tcc')) {
-      return {
-        interpretation: 'Busca por documentos do tipo Resolução relacionados a Trabalhos de Conclusão de Curso (TCC) que foram aprovados durante o ano de 2024.',
-        entities: {
-          documentTypes: ['Resolução'],
-          keywords: ['TCC', 'Trabalho de Conclusão'],
-          status: ['Aprovado', 'Vigente'],
-          dateRange: '2024'
-        },
-        filters: [
-          { label: 'Tipo de Documento', value: 'Resolução' },
-          { label: 'Assunto', value: 'TCC (Trabalho de Conclusão)' },
-          { label: 'Status', value: 'Aprovado / Vigente' },
-          { label: 'Ano', value: '2024' }
-        ],
-        sqlQuery: `SELECT 
-  d.id,
-  d.titulo,
-  d.tipo,
-  d.data_aprovacao,
-  d.autor,
-  d.setor,
-  d.versao,
-  d.status
-FROM documentos d
-WHERE d.tipo = 'Resolução'
-  AND (d.titulo ILIKE '%TCC%' OR d.titulo ILIKE '%Trabalho de Conclusão%')
-  AND d.status IN ('Aprovado', 'Vigente')
-  AND EXTRACT(YEAR FROM d.data_aprovacao) = 2024
-ORDER BY d.data_aprovacao DESC;`,
-        results: [
-          {
-            id: 1,
-            title: 'Resolução 045/2024 - Normas de TCC',
-            type: 'Resolução',
-            date: '2024-02-20',
-            author: 'Conselho Universitário',
-            sector: 'Secretaria Geral',
-            version: '1.0',
-            status: 'Vigente'
-          },
-          {
-            id: 2,
-            title: 'Resolução 023/2024 - Prazos de TCC',
-            type: 'Resolução',
-            date: '2024-01-15',
-            author: 'Conselho Universitário',
-            sector: 'Secretaria Geral',
-            version: '1.0',
-            status: 'Aprovado'
-          }
-        ]
-      };
-    }
-
-    if (lowerQuery.includes('coordenação de engenharia') || lowerQuery.includes('engenharia')) {
-      return {
-        interpretation: 'Busca por documentos vinculados à Coordenação de Engenharia que possuem status indicando necessidade de revisão ou atualização.',
-        entities: {
-          sectors: ['Coordenação de Engenharia'],
-          status: ['Em Revisão', 'Pendente'],
-          keywords: ['revisão', 'engenharia']
-        },
-        filters: [
-          { label: 'Setor', value: 'Coordenação de Engenharia' },
-          { label: 'Status', value: 'Em Revisão / Pendente' },
-          { label: 'Prioridade', value: 'Documentos que precisam de ação' }
-        ],
-        sqlQuery: `SELECT 
-  d.id,
-  d.titulo,
-  d.tipo,
-  d.data_atualizacao,
-  d.autor,
-  d.setor,
-  d.versao,
-  d.status,
-  d.prazo_revisao
-FROM documentos d
-WHERE d.setor = 'Coordenação de Engenharia'
-  AND d.status IN ('Em Revisão', 'Pendente')
-ORDER BY d.prazo_revisao ASC NULLS LAST, d.data_atualizacao DESC;`,
-        results: [
-          {
-            id: 1,
-            title: 'PPC - Engenharia Civil 2023',
-            type: 'PPC',
-            date: '2023-08-10',
-            author: 'Prof. Ana Silva',
-            sector: 'Coordenação de Engenharia',
-            version: '2.5',
-            status: 'Pendente'
-          },
-          {
-            id: 2,
-            title: 'Relatório de Reconhecimento - Eng. Mecânica',
-            type: 'Processo',
-            date: '2024-01-20',
-            author: 'Comissão de Reconhecimento',
-            sector: 'Coordenação de Engenharia',
-            version: '1.3',
-            status: 'Em Revisão'
-          }
-        ]
-      };
-    }
-
-    if (lowerQuery.includes('relatório') && (lowerQuery.includes('avaliação') || lowerQuery.includes('institucional'))) {
-      return {
-        interpretation: 'Busca por relatórios de avaliação institucional publicados nos últimos 2 anos (2023-2024).',
-        entities: {
-          documentTypes: ['Relatório'],
-          keywords: ['avaliação institucional', 'CPA'],
-          dateRange: 'Últimos 2 anos',
-          status: ['Publicado', 'Aprovado']
-        },
-        filters: [
-          { label: 'Tipo de Documento', value: 'Relatório' },
-          { label: 'Categoria', value: 'Avaliação Institucional' },
-          { label: 'Período', value: '2023-2024' },
-          { label: 'Status', value: 'Publicado' }
-        ],
-        sqlQuery: `SELECT 
-  d.id,
-  d.titulo,
-  d.tipo,
-  d.data_publicacao,
-  d.autor,
-  d.setor,
-  d.versao,
-  d.status
-FROM documentos d
-WHERE d.tipo = 'Relatório'
-  AND (d.titulo ILIKE '%avaliação institucional%' OR d.setor = 'CPA')
-  AND d.data_publicacao >= CURRENT_DATE - INTERVAL '2 years'
-  AND d.status IN ('Publicado', 'Aprovado')
-ORDER BY d.data_publicacao DESC;`,
-        results: [
-          {
-            id: 1,
-            title: 'Relatório de Avaliação Institucional 2023',
-            type: 'Relatório',
-            date: '2024-01-10',
-            author: 'CPA',
-            sector: 'Comissão Própria de Avaliação',
-            version: '2.1',
-            status: 'Publicado'
-          },
-          {
-            id: 2,
-            title: 'Relatório de Avaliação Institucional 2022',
-            type: 'Relatório',
-            date: '2023-02-15',
-            author: 'CPA',
-            sector: 'Comissão Própria de Avaliação',
-            version: '2.0',
-            status: 'Publicado'
-          }
-        ]
-      };
-    }
-
-    if (lowerQuery.includes('computação') && lowerQuery.includes('pendente')) {
-      return {
-        interpretation: 'Busca por PPCs de cursos relacionados à área de Computação (Ciência da Computação, Sistemas de Informação, etc.) com status pendente de aprovação ou atualização.',
-        entities: {
-          documentTypes: ['PPC'],
-          courses: ['Ciência da Computação', 'Sistemas de Informação', 'Engenharia de Computação'],
-          status: ['Pendente'],
-          keywords: ['computação', 'pendente']
-        },
-        filters: [
-          { label: 'Tipo de Documento', value: 'PPC' },
-          { label: 'Área', value: 'Computação' },
-          { label: 'Status', value: 'Pendente' },
-          { label: 'Ordenação', value: 'Mais urgentes primeiro' }
-        ],
-        sqlQuery: `SELECT 
-  d.id,
-  d.titulo,
-  d.tipo,
-  d.data_atualizacao,
-  d.autor,
-  d.setor,
-  d.versao,
-  d.status,
-  c.nome_curso,
-  c.area
-FROM documentos d
-JOIN cursos c ON d.curso_id = c.id
-WHERE d.tipo = 'PPC'
-  AND c.area = 'Computação'
-  AND d.status = 'Pendente'
-ORDER BY d.prazo_revisao ASC, d.data_atualizacao ASC;`,
-        results: [
-          {
-            id: 1,
-            title: 'PPC - Sistemas de Informação 2023',
-            type: 'PPC',
-            course: 'Sistemas de Informação',
-            date: '2023-11-20',
-            author: 'Prof. Roberto Lima',
-            sector: 'Coordenação de Computação',
-            version: '2.8',
-            status: 'Pendente'
-          }
-        ]
-      };
-    }
-
-    // Resposta genérica
-    return {
-      interpretation: `Busca geral por documentos relacionados a: "${userQuery}". O sistema irá procurar correspondências no título, conteúdo e metadados.`,
-      entities: {
-        keywords: userQuery.split(' ').filter(w => w.length > 3)
-      },
-      filters: [
-        { label: 'Tipo de Busca', value: 'Texto completo' },
-        { label: 'Campos', value: 'Título, Conteúdo, Metadados' }
-      ],
-      sqlQuery: `SELECT 
-  d.id,
-  d.titulo,
-  d.tipo,
-  d.data_atualizacao,
-  d.autor,
-  d.setor,
-  d.versao,
-  d.status,
-  ts_rank(d.search_vector, plainto_tsquery('portuguese', $1)) AS relevancia
-FROM documentos d
-WHERE d.search_vector @@ plainto_tsquery('portuguese', $1)
-ORDER BY relevancia DESC, d.data_atualizacao DESC
-LIMIT 50;`,
-      results: []
-    };
   };
 
   const copySQL = () => {
@@ -415,6 +124,7 @@ LIMIT 50;`,
               onChange={(e) => setQuery(e.target.value)}
               rows={3}
               className="w-full resize-none"
+              disabled={isAnalyzing}
             />
           </div>
 
@@ -427,12 +137,12 @@ LIMIT 50;`,
               {isAnalyzing ? (
                 <>
                   <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
-                  Analisando...
+                  Analisando com IA...
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 mr-2" />
-                  Analisar Consulta
+                  Analisar com Gemini
                 </>
               )}
             </Button>
@@ -441,7 +151,9 @@ LIMIT 50;`,
               onClick={() => {
                 setQuery('');
                 setAnalysis(null);
+                setError(null);
               }}
+              disabled={isAnalyzing}
             >
               Limpar
             </Button>
@@ -464,9 +176,17 @@ LIMIT 50;`,
         </div>
       </div>
 
+      {error && (
+        <Alert className="bg-red-50 border-red-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <AlertCircle className="w-4 h-4 text-red-600" />
+          <AlertDescription className="text-red-700">
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {analysis && (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {/* Interpretação */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -484,7 +204,6 @@ LIMIT 50;`,
             </CardContent>
           </Card>
 
-          {/* Entidades Identificadas */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -574,7 +293,6 @@ LIMIT 50;`,
             </CardContent>
           </Card>
 
-          {/* Filtros Aplicados */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -596,7 +314,6 @@ LIMIT 50;`,
             </CardContent>
           </Card>
 
-          {/* Query SQL Gerada */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -636,7 +353,6 @@ LIMIT 50;`,
             </CardContent>
           </Card>
 
-          {/* Resultados */}
           {analysis.results.length > 0 && (
             <Card>
               <CardHeader>
