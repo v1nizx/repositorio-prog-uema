@@ -1,4 +1,4 @@
-import { adminFirestore } from '@/config/firebase-admin.config';
+import { getFirestoreDb } from '@/config/firebase-admin.config';
 
 export interface UploadDocument {
   id?: string;
@@ -25,6 +25,9 @@ export interface UploadProgress {
 class DocumentUploadService {
   private readonly collectionName = 'documents';
   private readonly CHUNK_SIZE = 900000; // 900KB por chunk (abaixo do limite de 1MB)
+  private get db() {
+    return getFirestoreDb();
+  }
 
   /**
    * Upload um arquivo para o Firestore (dividido em chunks)
@@ -64,7 +67,7 @@ class DocumentUploadService {
       };
 
       console.log('💾 Salvando documento no Firestore');
-      const docRef = await adminFirestore.collection(this.collectionName).add({
+      const docRef = await this.db.collection(this.collectionName).add({
         ...documentData,
         uploadedAt: now,
         updatedAt: now,
@@ -74,7 +77,7 @@ class DocumentUploadService {
 
       // Salvar chunks em subcoleção
       console.log('📦 Salvando chunks...');
-      const chunksRef = adminFirestore.collection(this.collectionName).doc(docRef.id).collection('chunks');
+      const chunksRef = this.db.collection(this.collectionName).doc(docRef.id).collection('chunks');
       for (let i = 0; i < chunks.length; i++) {
         await chunksRef.add({
           index: i,
@@ -99,7 +102,7 @@ class DocumentUploadService {
    */
   async getAllDocuments(): Promise<UploadDocument[]> {
     try {
-      const snapshot = await adminFirestore
+      const snapshot = await this.db
         .collection(this.collectionName)
         .where('status', '==', 'ativo')
         .get();
@@ -124,7 +127,7 @@ class DocumentUploadService {
    */
   async getFileContent(docId: string): Promise<{ buffer: ArrayBuffer; name: string } | null> {
     try {
-      const chunksSnapshot = await adminFirestore
+      const chunksSnapshot = await this.db
         .collection(this.collectionName)
         .doc(docId)
         .collection('chunks')
@@ -146,7 +149,7 @@ class DocumentUploadService {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      const docSnapshot = await adminFirestore.collection(this.collectionName).doc(docId).get();
+      const docSnapshot = await this.db.collection(this.collectionName).doc(docId).get();
       const docData = docSnapshot.data();
 
       return {
@@ -164,7 +167,7 @@ class DocumentUploadService {
    */
   async getDocumentsByType(type: string): Promise<UploadDocument[]> {
     try {
-      const snapshot = await adminFirestore
+      const snapshot = await this.db
         .collection(this.collectionName)
         .where('tipo', '==', type)
         .where('status', '==', 'ativo')
@@ -190,7 +193,7 @@ class DocumentUploadService {
    */
   async getDocumentsBySector(sector: string): Promise<UploadDocument[]> {
     try {
-      const snapshot = await adminFirestore
+      const snapshot = await this.db
         .collection(this.collectionName)
         .where('setor', '==', sector)
         .where('status', '==', 'ativo')
@@ -216,7 +219,7 @@ class DocumentUploadService {
    */
   async updateDocument(id: string, updates: Partial<UploadDocument>): Promise<void> {
     try {
-      await adminFirestore.collection(this.collectionName).doc(id).update({
+      await this.db.collection(this.collectionName).doc(id).update({
         ...updates,
         updatedAt: new Date(),
       });
@@ -232,7 +235,7 @@ class DocumentUploadService {
    */
   async deleteDocument(id: string): Promise<void> {
     try {
-      await adminFirestore.collection(this.collectionName).doc(id).delete();
+      await this.db.collection(this.collectionName).doc(id).delete();
       console.log('✅ Documento deletado:', id);
     } catch (error) {
       console.error('❌ Erro ao deletar documento:', error);
@@ -245,7 +248,7 @@ class DocumentUploadService {
    */
   async archiveDocument(id: string): Promise<void> {
     try {
-      await adminFirestore.collection(this.collectionName).doc(id).update({
+      await this.db.collection(this.collectionName).doc(id).update({
         status: 'arquivado',
         updatedAt: new Date(),
       });
@@ -278,10 +281,10 @@ class DocumentUploadService {
    */
   async incrementVersion(id: string): Promise<void> {
     try {
-      const docSnapshot = await adminFirestore.collection(this.collectionName).doc(id).get();
+      const docSnapshot = await this.db.collection(this.collectionName).doc(id).get();
       const currentVersion = docSnapshot.data()?.version || 0;
 
-      await adminFirestore.collection(this.collectionName).doc(id).update({
+      await this.db.collection(this.collectionName).doc(id).update({
         version: currentVersion + 1,
         updatedAt: new Date(),
       });

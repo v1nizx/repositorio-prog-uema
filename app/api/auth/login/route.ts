@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminFirestore } from '@/config/firebase-admin.config';
+import { getFirestoreDb } from '@/config/firebase-admin.config';
 
 interface LoginRequest {
   username: string;
@@ -37,7 +37,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<LoginResp
     console.log(`🔍 Tentando login para usuário: ${username}`);
 
     // Buscar usuário no Firestore usando Admin SDK
-    const usersCollection = adminFirestore.collection('users');
+    const db = getFirestoreDb();
+    const usersCollection = db.collection('users');
     const querySnapshot = await usersCollection.where('username', '==', username).get();
 
     if (querySnapshot.empty) {

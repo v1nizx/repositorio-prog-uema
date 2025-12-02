@@ -1,24 +1,27 @@
 import admin from 'firebase-admin';
 
+let firebaseInitialized = false;
+let firebaseError: Error | null = null;
+
 if (!admin.apps.length) {
   try {
-    let serviceAccount;
-    
-    // Tentar carregar o JSON da variável de ambiente
+    let serviceAccount: any = null;
     let serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
     
     if (!serviceAccountJson) {
-      console.warn('⚠️  FIREBASE_SERVICE_ACCOUNT_JSON não encontrada, tentando carregar arquivo...');
+      console.warn('⚠️  FIREBASE_SERVICE_ACCOUNT_JSON não encontrada');
       
-      // Fallback: tentar carregar do arquivo local (apenas em desenvolvimento)
+      // Tentar carregar do arquivo local apenas em desenvolvimento
       if (process.env.NODE_ENV === 'development') {
         try {
           serviceAccount = require('./firebase-service-account.json');
         } catch (e) {
-          throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON não está configurada na Vercel');
+          console.error('⚠️  Arquivo firebase-service-account.json não encontrado');
+          firebaseError = new Error('FIREBASE_SERVICE_ACCOUNT_JSON não está configurada');
         }
       } else {
-        throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON não está configurada na Vercel');
+        console.error('❌ FIREBASE_SERVICE_ACCOUNT_JSON não está configurada na Vercel');
+        firebaseError = new Error('FIREBASE_SERVICE_ACCOUNT_JSON não está configurada');
       }
     } else {
       try {
@@ -34,27 +37,45 @@ if (!admin.apps.length) {
         serviceAccount = JSON.parse(serviceAccountJson);
       } catch (parseError) {
         console.error('❌ Erro ao fazer parse do JSON:', parseError);
-        throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON não é um JSON válido');
+        firebaseError = new Error('FIREBASE_SERVICE_ACCOUNT_JSON não é um JSON válido');
       }
     }
 
-    const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || 'repositorio-proguema.appspot.com';
-    
-    console.log('🔧 Inicializando Firebase Admin com:');
-    console.log('  Project ID:', serviceAccount.project_id);
-    console.log('  Storage Bucket:', storageBucket);
-    
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: storageBucket,
-    });
-    
-    console.log('✅ Firebase Admin inicializado com sucesso');
+    if (serviceAccount && !firebaseError) {
+      const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || 'repositorio-proguema.appspot.com';
+      
+      console.log('🔧 Inicializando Firebase Admin com:');
+      console.log('  Project ID:', serviceAccount.project_id);
+      console.log('  Storage Bucket:', storageBucket);
+      
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: storageBucket,
+      });
+      
+      console.log('✅ Firebase Admin inicializado com sucesso');
+      firebaseInitialized = true;
+    }
   } catch (error) {
     console.error('❌ Erro ao inicializar Firebase Admin:', error);
-    throw error;
+    firebaseError = error instanceof Error ? error : new Error(String(error));
   }
 }
 
-export const adminFirestore = admin.firestore();
-export const adminStorage = admin.storage();
+// Lazy export com tratamento de erro
+export const adminFirestore = firebaseInitialized ? admin.firestore() : null;
+export const adminStorage = firebaseInitialized ? admin.storage() : null;
+
+export function getFirestoreDb() {
+  if (!firebaseInitialized || !adminFirestore) {
+    throw firebaseError || new Error('Firebase não foi inicializado. Configure FIREBASE_SERVICE_ACCOUNT_JSON');
+  }
+  return adminFirestore;
+}
+
+export function getStorageBucket() {
+  if (!firebaseInitialized || !adminStorage) {
+    throw firebaseError || new Error('Firebase não foi inicializado. Configure FIREBASE_SERVICE_ACCOUNT_JSON');
+  }
+  return adminStorage;
+}

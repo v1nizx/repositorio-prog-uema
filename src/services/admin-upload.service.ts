@@ -1,4 +1,4 @@
-import { adminStorage, adminFirestore } from '@/config/firebase-admin.config';
+import { getStorageBucket, getFirestoreDb } from '@/config/firebase-admin.config';
 import { Timestamp } from 'firebase-admin/firestore';
 
 // Interface atualizada para bater com o padrão (Inglês)
@@ -25,6 +25,14 @@ export interface AcademicDocument {
 class AdminUploadService {
   private readonly collectionName = 'documents';
   private readonly storagePath = 'documents';
+  
+  private get storage() {
+    return getStorageBucket();
+  }
+  
+  private get db() {
+    return getFirestoreDb();
+  }
 
   /**
    * Upload um arquivo para o Firebase Storage (servidor)
@@ -35,11 +43,7 @@ class AdminUploadService {
     metadata: Omit<AcademicDocument, 'id' | 'fileUrl' | 'fileName' | 'fileSize' | 'uploadedAt' | 'updatedAt' | 'version' | 'status'>
   ): Promise<AcademicDocument> {
     try {
-      if (!adminStorage) {
-        throw new Error('Firebase Storage não foi inicializado');
-      }
-
-      const bucket = adminStorage.bucket();
+      const bucket = this.storage.bucket();
       const timestamp = Date.now();
       
       // Limpeza de nome para evitar erros na URL (mesmo padrão do front)
@@ -79,12 +83,8 @@ class AdminUploadService {
         status: 'active', // 'ativo' -> 'active'
       };
 
-      if (!adminFirestore) {
-        throw new Error('Firestore não foi inicializado');
-      }
-
       // Salva no Firestore
-      const docRef = await adminFirestore.collection(this.collectionName).add({
+      const docRef = await this.db.collection(this.collectionName).add({
         ...documentData,
         uploadedAt: Timestamp.fromDate(now),
         updatedAt: Timestamp.fromDate(now),
@@ -105,12 +105,8 @@ class AdminUploadService {
    */
   async getAllDocuments(): Promise<AcademicDocument[]> {
     try {
-      if (!adminFirestore) {
-        throw new Error('Firestore não foi inicializado');
-      }
-
       // Busca apenas os status 'active'
-      const snapshot = await adminFirestore
+      const snapshot = await this.db
         .collection(this.collectionName)
         .where('status', '==', 'active') 
         .get();
@@ -149,11 +145,7 @@ class AdminUploadService {
    */
   async deleteDocument(documentId: string): Promise<void> {
     try {
-      if (!adminFirestore || !adminStorage) {
-        throw new Error('Firebase Admin não inicializado');
-      }
-
-      const docRef = adminFirestore.collection(this.collectionName).doc(documentId);
+      const docRef = this.db.collection(this.collectionName).doc(documentId);
       const docSnap = await docRef.get();
 
       if (!docSnap.exists) {
@@ -169,12 +161,12 @@ class AdminUploadService {
             // Extrai o nome do arquivo salvo (que tem o timestamp) da URL ou salva no banco separadamente
             // Se você não salvar o "storagePath" no banco, terá que inferir da URL.
             // Simplificação: Se a URL contém o nome do bucket, tentamos extrair o path
-            const bucketName = adminStorage.bucket().name;
+            const bucketName = this.storage.bucket().name;
             if(data.fileUrl.includes(bucketName)) {
                 const pathParts = data.fileUrl.split(`${bucketName}/`);
                 if(pathParts[1]) {
                     const filePath = decodeURIComponent(pathParts[1]);
-                    await adminStorage.bucket().file(filePath).delete();
+                    await this.storage.bucket().file(filePath).delete();
                 }
             }
         } catch (err) {
