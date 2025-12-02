@@ -2,12 +2,19 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const dynamic = 'force-dynamic';
 
-// Validar chave de API na inicialização
-if (!process.env.GEMINI_API_KEY) {
-  console.error('❌ GEMINI_API_KEY não configurada!');
-}
+// Lazy initialization - não inicializa no build
+let genAI: GoogleGenerativeAI | null = null;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'invalid-key');
+function getGenAI() {
+  if (!genAI) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY não configurada no servidor');
+    }
+    genAI = new GoogleGenerativeAI(apiKey);
+  }
+  return genAI;
+}
 
 const systemPrompt = `Você é um assistente especializado em análise de consultas para um sistema de gestão de documentos acadêmicos da UEMA.
 
@@ -74,7 +81,8 @@ export async function POST(request: Request) {
 
     console.log('✅ GEMINI_API_KEY encontrada');
 
-    const model = genAI.getGenerativeModel({
+    const ai = getGenAI();
+    const model = ai.getGenerativeModel({
       model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.7,
