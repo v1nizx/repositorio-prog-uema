@@ -17,6 +17,8 @@ interface QueryAnalysisResult {
 
 export async function analyzeQueryWithGemini(userQuery: string): Promise<QueryAnalysisResult> {
   try {
+    console.log('🔍 Iniciando análise com Gemini para:', userQuery);
+    
     const response = await fetch('/api/ai/analyze', {
       method: 'POST',
       headers: {
@@ -25,15 +27,25 @@ export async function analyzeQueryWithGemini(userQuery: string): Promise<QueryAn
       body: JSON.stringify({ query: userQuery }),
     });
 
+    console.log('📡 Resposta do servidor:', response.status, response.statusText);
+
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Erro ao processar consulta');
+      console.error('❌ Erro retornado pela API:', error);
+      throw new Error(error.error || error.details || 'Erro ao processar consulta');
     }
 
     const analysis: QueryAnalysisResult = await response.json();
+    console.log('✅ Análise concluída com sucesso');
     return analysis;
   } catch (error) {
-    console.error('Erro ao analisar query com Gemini:', error);
+    console.error('❌ Erro ao analisar query com Gemini:', error);
+    
+    if (error instanceof Error) {
+      console.error('   Mensagem:', error.message);
+      console.error('   Stack:', error.stack);
+    }
+    
     throw error;
   }
 }

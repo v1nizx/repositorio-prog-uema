@@ -1,8 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
 export const dynamic = 'force-dynamic';
+
+// Validar chave de API na inicialização
+if (!process.env.GEMINI_API_KEY) {
+  console.error('❌ GEMINI_API_KEY não configurada!');
+}
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'invalid-key');
 
 const systemPrompt = `Você é um assistente especializado em análise de consultas para um sistema de gestão de documentos acadêmicos da UEMA.
 
@@ -46,7 +51,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { query } = body;
 
+    console.log('📥 Recebida query:', query);
+
     if (!query || typeof query !== 'string') {
+      console.warn('⚠️ Query inválida recebida');
       return Response.json(
         { error: 'Query inválida' },
         { status: 400 }
@@ -54,14 +62,20 @@ export async function POST(request: Request) {
     }
 
     if (!process.env.GEMINI_API_KEY) {
+      console.error('❌ GEMINI_API_KEY não disponível em process.env');
       return Response.json(
-        { error: 'GEMINI_API_KEY não configurada no servidor' },
+        { 
+          error: 'GEMINI_API_KEY não configurada no servidor',
+          details: 'Por favor, configure a variável de ambiente GEMINI_API_KEY'
+        },
         { status: 500 }
       );
     }
 
+    console.log('✅ GEMINI_API_KEY encontrada');
+
     const model = genAI.getGenerativeModel({
-      model: 'gemini-pro',
+      model: 'gemini-2.5-flash',
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -76,13 +90,17 @@ Consulta do usuário: "${query}"
 
 Analise a consulta e retorne um JSON válido com a análise completa.`;
 
+    console.log('🤖 Enviando para Gemini...');
     const result = await model.generateContent(prompt);
     const response = result.response;
     const text = response.text();
 
+    console.log('📝 Resposta recebida do Gemini');
+
     // Extrair JSON da resposta
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.error('❌ JSON não encontrado na resposta:', text.substring(0, 200));
       return Response.json(
         { error: 'Não foi possível processar a resposta da IA' },
         { status: 500 }
@@ -90,12 +108,22 @@ Analise a consulta e retorne um JSON válido com a análise completa.`;
     }
 
     const analysis = JSON.parse(jsonMatch[0]);
+    console.log('✅ Análise completa:', analysis.interpretation);
 
     return Response.json(analysis);
   } catch (error) {
-    console.error('Erro ao analisar query:', error);
+    console.error('❌ Erro ao analisar query:', error);
+    
+    let errorMessage = 'Erro ao processar consulta';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    
     return Response.json(
-      { error: 'Erro ao processar consulta' },
+      { 
+        error: errorMessage,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }
