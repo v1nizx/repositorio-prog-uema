@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firestore } from '@/config/firebase.config';
-import { query, where, getDocs, collection } from 'firebase/firestore';
+import { adminFirestore } from '@/config/firebase-admin.config';
 
 interface LoginRequest {
   username: string;
@@ -25,15 +24,6 @@ interface LoginResponse {
  */
 export async function POST(request: NextRequest): Promise<NextResponse<LoginResponse>> {
   try {
-    // Validar configuração do Firebase
-    if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
-      console.error('❌ ERRO: Variável NEXT_PUBLIC_FIREBASE_PROJECT_ID não está configurada');
-      return NextResponse.json(
-        { success: false, error: 'Erro na configuração do servidor' },
-        { status: 500 }
-      );
-    }
-
     const body = await request.json() as LoginRequest;
     const { username, password } = body;
 
@@ -46,9 +36,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<LoginResp
 
     console.log(`🔍 Tentando login para usuário: ${username}`);
 
-    // Buscar usuário no Firestore
-    const q = query(collection(firestore, 'users'), where('username', '==', username));
-    const querySnapshot = await getDocs(q);
+    // Buscar usuário no Firestore usando Admin SDK
+    const usersCollection = adminFirestore.collection('users');
+    const querySnapshot = await usersCollection.where('username', '==', username).get();
 
     if (querySnapshot.empty) {
       console.log(`❌ Usuário não encontrado: ${username}`);
