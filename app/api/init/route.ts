@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firestore } from '@/config/firebase.config';
-import { collection, setDoc, doc, query, where, getDocs } from 'firebase/firestore';
+import { adminFirestore } from '@/config/firebase-admin.config';
 
 interface InitResponse {
   success: boolean;
@@ -43,8 +42,7 @@ const INITIAL_USERS = [
 export async function POST(request: NextRequest): Promise<NextResponse<InitResponse>> {
   try {
     // Verificar se já existem usuários
-    const q = query(collection(firestore, 'users'));
-    const existingUsers = await getDocs(q);
+    const existingUsers = await adminFirestore.collection('users').get();
 
     if (!existingUsers.empty) {
       return NextResponse.json(
@@ -56,8 +54,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<InitRespo
     // Criar usuários iniciais
     let usersCreated = 0;
     for (const user of INITIAL_USERS) {
-      const userRef = doc(firestore, 'users', user.id);
-      await setDoc(userRef, {
+      await adminFirestore.collection('users').doc(user.id).set({
         username: user.username,
         password: user.password,
         name: user.name,

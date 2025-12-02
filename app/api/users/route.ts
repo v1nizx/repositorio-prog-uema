@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firestore } from '@/config/firebase.config';
-import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
+import { adminFirestore } from '@/config/firebase-admin.config';
 
 /**
  * GET /api/users
@@ -8,8 +7,7 @@ import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firesto
  */
 export async function GET(request: NextRequest) {
   try {
-    const q = query(collection(firestore, 'users'));
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await adminFirestore.collection('users').get();
 
     const users = querySnapshot.docs.map(doc => {
       const data = doc.data();
