@@ -3,39 +3,31 @@ import { getStorage } from 'firebase/storage';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 
-// --- ÁREA DE DEPURAÇÃO ---
-// Se o deploy da Vercel continuar falhando, faça o seguinte teste:
-// 1. Descomente a linha 'hardcodedKey' abaixo.
-// 2. Cole sua chave API real (que começa com AIza...) entre as aspas.
-// 3. Isso vai forçar o sistema a usar a chave direta, ignorando as variáveis de ambiente bugadas.
-// LEMBRE-SE DE REMOVER ISSO DEPOIS QUE FUNCIONAR!
-
- const hardcodedKey = "AIzaSyCJjCYc-c6PaSsb7jOLeCgo8G26mEacZOY";
-
-const firebaseConfig = {
-  // Se você descomentou a linha acima, mude para: apiKey: hardcodedKey,
-  apiKey: hardcodedKey, 
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-// --- DEBUG PARA O VERCEL ---
-// Verificando quais variáveis estão chegando (sem mostrar o valor completo por segurança)
-console.log('--- DEBUG DE VARIÁVEIS DE AMBIENTE ---');
-const debugVars = [
+// Validar variáveis de ambiente obrigatórias
+const requiredVars = [
   'NEXT_PUBLIC_FIREBASE_API_KEY',
+  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN',
   'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-  'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN'
+  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
+  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+  'NEXT_PUBLIC_FIREBASE_APP_ID'
 ];
 
-debugVars.forEach(varName => {
-  const value = process.env[varName];
-  console.log(`${varName}: ${value ? 'OK (Carregado)' : 'ERRO (Undefined/Vazio)'}`);
-});
-console.log('--------------------------------------');
+const missingVars = requiredVars.filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('❌ ERRO: Variáveis de ambiente faltando:', missingVars);
+  console.error('Verifique o arquivo .env.local ou as variáveis do Vercel');
+}
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
+};
 
 // Padrão Singleton para evitar inicializar múltiplas vezes
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

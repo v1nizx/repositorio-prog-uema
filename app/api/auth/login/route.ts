@@ -25,6 +25,15 @@ interface LoginResponse {
  */
 export async function POST(request: NextRequest): Promise<NextResponse<LoginResponse>> {
   try {
+    // Validar configuração do Firebase
+    if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+      console.error('❌ ERRO: Variável NEXT_PUBLIC_FIREBASE_PROJECT_ID não está configurada');
+      return NextResponse.json(
+        { success: false, error: 'Erro na configuração do servidor' },
+        { status: 500 }
+      );
+    }
+
     const body = await request.json() as LoginRequest;
     const { username, password } = body;
 
@@ -34,6 +43,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<LoginResp
         { status: 400 }
       );
     }
+
+    console.log(`🔍 Tentando login para usuário: ${username}`);
 
     // Buscar usuário no Firestore
     const q = query(collection(firestore, 'users'), where('username', '==', username));
