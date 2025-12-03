@@ -2,15 +2,29 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const dynamic = 'force-dynamic';
 
-// Lazy initialization - não inicializa no build
+// Validar que a chave existe no início
+function validateApiKey(): string {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey.trim().length === 0) {
+    throw new Error(
+      'GEMINI_API_KEY não configurada. Configure em .env.local com uma chave válida de https://aistudio.google.com/apikey'
+    );
+  }
+  
+  // Validações básicas de segurança
+  if (apiKey.includes('undefined') || apiKey.includes('null')) {
+    throw new Error('GEMINI_API_KEY contém valor inválido');
+  }
+  
+  return apiKey;
+}
+
+// Lazy initialization com validação
 let genAI: GoogleGenerativeAI | null = null;
 
 function getGenAI() {
   if (!genAI) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY não configurada no servidor');
-    }
+    const apiKey = validateApiKey();
     genAI = new GoogleGenerativeAI(apiKey);
   }
   return genAI;
@@ -55,31 +69,31 @@ Dicas para gerar SQL eficiente:
 
 export async function POST(request: Request) {
   try {
+    // Validar chave da API imediatamente
+    const apiKey = validateApiKey();
+
     const body = await request.json();
     const { query } = body;
 
     console.log('📥 Recebida query:', query);
 
-    if (!query || typeof query !== 'string') {
+    if (!query || typeof query !== 'string' || query.trim().length === 0) {
       console.warn('⚠️ Query inválida recebida');
       return Response.json(
-        { error: 'Query inválida' },
+        { error: 'Query inválida ou vazia' },
         { status: 400 }
       );
     }
 
-    if (!process.env.GEMINI_API_KEY) {
-      console.error('❌ GEMINI_API_KEY não disponível em process.env');
+    if (query.length > 1000) {
+      console.warn('⚠️ Query muito longa');
       return Response.json(
-        { 
-          error: 'GEMINI_API_KEY não configurada no servidor',
-          details: 'Por favor, configure a variável de ambiente GEMINI_API_KEY'
-        },
-        { status: 500 }
+        { error: 'Query muito longa (máx 1000 caracteres)' },
+        { status: 400 }
       );
     }
 
-    console.log('✅ GEMINI_API_KEY encontrada');
+    console.log('✅ Validações passadas');
 
     const ai = getGenAI();
     const model = ai.getGenerativeModel({
@@ -99,32 +113,60 @@ Consulta do usuário: "${query}"
 Analise a consulta e retorne um JSON válido com a análise completa.`;
 
     console.log('🤖 Enviando para Gemini...');
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const text = response.text();
+    
+    try {
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
 
-    console.log('📝 Resposta recebida do Gemini');
+      console.log('📝 Resposta recebida do Gemini');
 
-    // Extrair JSON da resposta
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error('❌ JSON não encontrado na resposta:', text.substring(0, 200));
-      return Response.json(
-        { error: 'Não foi possível processar a resposta da IA' },
-        { status: 500 }
-      );
+      // Extrair JSON da resposta
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error('❌ JSON não encontrado na resposta:', text.substring(0, 200));
+        return Response.json(
+          { error: 'Não foi possível processar a resposta da IA' },
+          { status: 500 }
+        );
+      }
+
+      const analysis = JSON.parse(jsonMatch[0]);
+      console.log('✅ Análise completa:', analysis.interpretation);
+
+      return Response.json(analysis);
+    } catch (geminiError: any) {
+      // Verificar se é erro de API key comprometida
+      if (geminiError?.status === 403) {
+        console.error('❌ ERRO CRÍTICO: API Key foi reportada como comprometida');
+        console.error('ℹ️ Gere uma nova chave em: https://aistudio.google.com/apikey');
+        
+        return Response.json(
+          { 
+            error: 'API Key comprometida. Gere uma nova chave em https://aistudio.google.com/apikey',
+            code: 'API_KEY_COMPROMISED',
+            action: 'Gere uma nova chave Gemini e configure em .env.local como GEMINI_API_KEY'
+          },
+          { status: 403 }
+        );
+      }
+      
+      throw geminiError;
     }
-
-    const analysis = JSON.parse(jsonMatch[0]);
-    console.log('✅ Análise completa:', analysis.interpretation);
-
-    return Response.json(analysis);
   } catch (error) {
     console.error('❌ Erro ao analisar query:', error);
     
     let errorMessage = 'Erro ao processar consulta';
+    let statusCode = 500;
+    
     if (error instanceof Error) {
       errorMessage = error.message;
+      
+      // Mensagens de erro mais amigáveis
+      if (errorMessage.includes('GEMINI_API_KEY')) {
+        statusCode = 500;
+        errorMessage = 'Configuração de API Key inválida. Verifique .env.local';
+      }
     }
     
     return Response.json(
@@ -132,7 +174,7 @@ Analise a consulta e retorne um JSON válido com a análise completa.`;
         error: errorMessage,
         timestamp: new Date().toISOString()
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }

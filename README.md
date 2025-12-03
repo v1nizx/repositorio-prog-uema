@@ -1,6 +1,85 @@
 # 📚 Sistema PROG - Gestão de Documentos Acadêmicos
 
-> Uma plataforma moderna e robusta para gerenciamento centralizado de documentos acadêmicos da PROG/UEMA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+fi    exit 1    echo "$response"    echo "⚠️  Resposta inesperada:"else    exit 1    echo "Verifique se a chave está correta"    echo "❌ Erro 401: Não autorizado (chave inválida)"elif echo "$response" | grep -q "401"; then    exit 1    echo "Detalhes: $response"    echo "❌ Erro 400: Requisição inválida"elif echo "$response" | grep -q "400"; then    exit 1    echo "3. Execute: bash setup-gemini.sh"    echo "2. Gere uma NOVA chave"    echo "1. Acesse: https://aistudio.google.com/apikey"    echo "Solução:"    echo ""    echo "❌ Erro 403: API key foi reportada como compromentida"elif echo "$response" | grep -q "403"; then    exit 0    echo "A busca com IA deve funcionar agora."    echo ""    echo "✅ Chave Gemini válida e funcionando!"if echo "$response" | grep -q '"text"'; then# Verificar sucessoecho ""echo ""echo "$response" | head -c 500echo "Resposta:"  }')    }      "maxOutputTokens": 100      "temperature": 0.7,    "generationConfig": {    }],      }]        "text": "Responda com apenas OK"      "parts": [{    "contents": [{  -d '{  -H "Content-Type: application/json" \  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$api_key" \response=$(curl -s -X POST \echo ""echo "📡 Enviando requisição de teste..."# Fazer requisição POST de testeecho ""echo "Primeiros caracteres: ${api_key:0:10}..."echo "🔑 Testando chave Gemini..."fi    exit 1    echo "❌ GEMINI_API_KEY não configurada em .env.local"if [ -z "$api_key" ]; thenapi_key=$(grep "GEMINI_API_KEY=" .env.local | cut -d'=' -f2 | tr -d '"')# Obter chavefi    exit 1    echo "Execute: bash setup-gemini.sh"    echo "❌ Arquivo .env.local não encontrado"if [ ! -f .env.local ]; then# Verificar se .env.local existeecho ""echo "================================"echo "🧪 Teste Gemini API"echo "================================"# Uso: bash test-gemini-api.sh# Script para testar a chave Gemini API> Uma plataforma moderna e robusta para gerenciamento centralizado de documentos acadêmicos da PROG/UEMA
 
 ![Status](https://img.shields.io/badge/status-production--ready-brightgreen)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
@@ -458,7 +537,53 @@ NEXT_PUBLIC_FIREBASE_APP_ID=seu_app_id
 
 # Firebase Admin Config (Backend)
 FIREBASE_ADMIN_SDK_KEY=sua_chave_admin_json
+
+# Gemini AI Config (para busca inteligente)
+# Gere uma nova chave em: https://aistudio.google.com/apikey
+GEMINI_API_KEY=sua_nova_chave_gemini
 ```
+
+### 🤖 Configuração da IA (Gemini)
+
+#### Obter Chave Gemini
+
+1. Acesse: **https://aistudio.google.com/apikey**
+2. Clique em **"Create API Key"**
+3. Selecione o projeto
+4. **Copie** a chave gerada
+
+#### Configurar Localmente
+
+**Opção A: Automática (Recomendado)**
+```bash
+bash setup-gemini.sh
+# O script pedirá sua chave e configurará automaticamente
+```
+
+**Opção B: Manual**
+```bash
+# Edite .env.local e adicione:
+GEMINI_API_KEY=AIzaSy_sua_chave_aqui
+```
+
+#### Testar Configuração
+
+```bash
+npm run dev
+# Acesse http://localhost:3000 e teste a busca com IA
+```
+
+**Procure logs como:**
+```
+✅ GEMINI_API_KEY encontrada
+🤖 Enviando para Gemini...
+📝 Resposta recebida do Gemini
+✅ Análise completa
+```
+
+> ⚠️ **Importante**: Se receber erro `[403 Forbidden] Your API key was reported as leaked`, gere uma nova chave em https://aistudio.google.com/apikey
+
+Veja: **GEMINI_API_KEY_FIX.md** para mais informações sobre resolução de problemas.
 
 ## ✨ Funcionalidades Implementadas
 
