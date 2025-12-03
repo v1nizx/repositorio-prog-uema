@@ -75,10 +75,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { query } = body;
 
-    console.log('📥 Recebida query:', query);
-
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
-      console.warn('⚠️ Query inválida recebida');
       return Response.json(
         { error: 'Query inválida ou vazia' },
         { status: 400 }
@@ -86,14 +83,11 @@ export async function POST(request: Request) {
     }
 
     if (query.length > 1000) {
-      console.warn('⚠️ Query muito longa');
       return Response.json(
         { error: 'Query muito longa (máx 1000 caracteres)' },
         { status: 400 }
       );
     }
-
-    console.log('✅ Validações passadas');
 
     const ai = getGenAI();
     const model = ai.getGenerativeModel({
@@ -112,19 +106,14 @@ Consulta do usuário: "${query}"
 
 Analise a consulta e retorne um JSON válido com a análise completa.`;
 
-    console.log('🤖 Enviando para Gemini...');
-    
     try {
       const result = await model.generateContent(prompt);
       const response = result.response;
       const text = response.text();
 
-      console.log('📝 Resposta recebida do Gemini');
-
       // Extrair JSON da resposta
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        console.error('❌ JSON não encontrado na resposta:', text.substring(0, 200));
         return Response.json(
           { error: 'Não foi possível processar a resposta da IA' },
           { status: 500 }
@@ -132,15 +121,10 @@ Analise a consulta e retorne um JSON válido com a análise completa.`;
       }
 
       const analysis = JSON.parse(jsonMatch[0]);
-      console.log('✅ Análise completa:', analysis.interpretation);
-
       return Response.json(analysis);
     } catch (geminiError: any) {
       // Verificar se é erro de API key comprometida
       if (geminiError?.status === 403) {
-        console.error('❌ ERRO CRÍTICO: API Key foi reportada como comprometida');
-        console.error('ℹ️ Gere uma nova chave em: https://aistudio.google.com/apikey');
-        
         return Response.json(
           { 
             error: 'API Key comprometida. Gere uma nova chave em https://aistudio.google.com/apikey',
@@ -154,8 +138,6 @@ Analise a consulta e retorne um JSON válido com a análise completa.`;
       throw geminiError;
     }
   } catch (error) {
-    console.error('❌ Erro ao analisar query:', error);
-    
     let errorMessage = 'Erro ao processar consulta';
     let statusCode = 500;
     

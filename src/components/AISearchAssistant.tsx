@@ -72,7 +72,6 @@ export function AISearchAssistant() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao analisar consulta';
       setError(`Erro ao processar sua busca: ${errorMessage}`);
-      console.error('Erro na análise:', err);
     } finally {
       setIsAnalyzing(false);
     }
