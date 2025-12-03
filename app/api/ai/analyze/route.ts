@@ -7,7 +7,7 @@ function validateApiKey(): string {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey.trim().length === 0) {
     throw new Error(
-      'GEMINI_API_KEY não configurada. Configure em .env.local com uma chave válida de https://aistudio.google.com/apikey'
+      'GEMINI_API_KEY não configurada. Configure a variável de ambiente GEMINI_API_KEY com uma chave válida de https://aistudio.google.com/apikey'
     );
   }
   
@@ -147,7 +147,7 @@ Analise a consulta e retorne um JSON válido com a análise completa.`;
       // Mensagens de erro mais amigáveis
       if (errorMessage.includes('GEMINI_API_KEY')) {
         statusCode = 500;
-        errorMessage = 'Configuração de API Key inválida. Verifique .env.local';
+        errorMessage = 'Chave Gemini não configurada. Contate o administrador para configurar a variável de ambiente GEMINI_API_KEY';
       }
     }
     
