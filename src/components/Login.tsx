@@ -162,7 +162,7 @@ export function Login({ onLoginSuccess, onSwitchToSignup }: LoginProps) {
 
         {/* Sistema Info */}
         <div className="text-center mt-4 sm:mt-6 text-white text-xs sm:text-sm">
-          <p>© 2024 - Sistema de Gestão Acadêmica</p>
+          <p>© 2025 - Sistema de Gestão Acadêmica</p>
           <p>Universidade Estadual do Maranhão</p>
         </div>
       </div>
