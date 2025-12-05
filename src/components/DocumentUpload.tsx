@@ -98,16 +98,16 @@ export function DocumentUpload() {
   const isFormValid = selectedFile && formData.title && formData.type && formData.author && formData.sector;
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-4 sm:space-y-6 max-w-3xl">
       <div>
-        <h2 className="text-gray-900">Upload de Documentos</h2>
-        <p className="text-gray-600">Adicione novos documentos ao sistema</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Upload de Documentos</h2>
+        <p className="text-sm sm:text-base text-gray-600">Adicione novos documentos ao sistema</p>
       </div>
 
       {uploadSuccess && showSuccessMessage && (
         <Alert className="bg-green-50 border-green-200">
           <CheckCircle className="w-4 h-4 text-green-600" />
-          <AlertDescription className="text-green-800">
+          <AlertDescription className="text-sm sm:text-base text-green-800">
             Documento enviado com sucesso! O versionamento foi aplicado automaticamente.
           </AlertDescription>
         </Alert>
@@ -116,18 +116,18 @@ export function DocumentUpload() {
       {error && (
         <Alert className="bg-red-50 border-red-200">
           <AlertCircle className="w-4 h-4 text-red-600" />
-          <AlertDescription className="text-red-800">
+          <AlertDescription className="text-sm sm:text-base text-red-800">
             {error.message}
           </AlertDescription>
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
           <div
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-400 transition-colors"
+            className="border-2 border-dashed border-gray-300 rounded-lg p-6 sm:p-12 text-center hover:border-blue-400 transition-colors"
           >
             {!selectedFile ? (
               <>

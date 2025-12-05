@@ -1,4 +1,4 @@
-import { Bell, User, Settings, LogOut, ChevronDown } from 'lucide-react';
+import { Bell, User, Settings, LogOut, ChevronDown, Menu } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, AvatarFallback } from './ui/avatar';
 
@@ -10,9 +10,10 @@ interface HeaderProps {
   };
   onLogout?: () => void;
   onProfileClick?: () => void;
+  onMenuClick?: () => void;
 }
 
-export function Header({ user, onLogout, onProfileClick }: HeaderProps) {
+export function Header({ user, onLogout, onProfileClick, onMenuClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleProfileClick = () => {
@@ -32,15 +33,24 @@ export function Header({ user, onLogout, onProfileClick }: HeaderProps) {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-gray-900">Sistema PROG</h1>
-          <p className="text-gray-500 text-sm">Gestão de Documentos Acadêmicos</p>
+    <header className="bg-white border-b border-gray-200 px-3 sm:px-6 py-3 sm:py-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={onMenuClick}
+            className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Abrir menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="min-w-0">
+            <h1 className="text-sm sm:text-base font-bold text-gray-900">Sistema PROG</h1>
+            <p className="text-xs sm:text-sm text-gray-500 truncate">Gestão de Documentos</p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Notificações">
             <Bell className="w-5 h-5" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>

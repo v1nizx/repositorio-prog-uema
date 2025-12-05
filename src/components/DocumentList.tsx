@@ -121,37 +121,38 @@ export function DocumentList() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-gray-900">Documentos</h2>
-          <p className="text-gray-600">Gerenciamento de documentos acadêmicos</p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Documentos</h2>
+          <p className="text-sm sm:text-base text-gray-600">Gerenciamento de documentos acadêmicos</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="px-3 py-1">
+          <Badge variant="outline" className="px-2 sm:px-3 py-1 text-xs sm:text-sm">
             {documents.length} documentos
           </Badge>
         </div>
       </div>
 
       {documents.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Nenhum documento foi enviado ainda</p>
-          <p className="text-sm text-gray-500">Comece enviando um documento na seção de upload</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8 text-center">
+          <FileText className="w-8 sm:w-12 h-8 sm:h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-sm sm:text-base text-gray-600">Nenhum documento foi enviado ainda</p>
+          <p className="text-xs sm:text-sm text-gray-500">Comece enviando um documento na seção de upload</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <Table>
+        <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+          <div className="min-w-full inline-block align-middle">
+            <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Documento</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Setor</TableHead>
-                <TableHead>Autor</TableHead>
-                <TableHead>Data de Upload</TableHead>
-                <TableHead>Versão</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+                <TableHead className="min-w-[200px]">Documento</TableHead>
+                <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+                <TableHead className="hidden md:table-cell">Setor</TableHead>
+                <TableHead className="hidden lg:table-cell">Autor</TableHead>
+                <TableHead className="hidden md:table-cell">Data de Upload</TableHead>
+                <TableHead className="hidden sm:table-cell">Versão</TableHead>
+                <TableHead className="w-[50px] text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -227,6 +228,7 @@ export function DocumentList() {
               ))}
             </TableBody>
           </Table>
+            </div>
         </div>
       )}
     </div>

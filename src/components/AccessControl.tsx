@@ -149,50 +149,52 @@ export function AccessControl() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-gray-900">Controle de Acesso</h2>
-          <p className="text-gray-600">Gerenciamento de usuários e permissões</p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+        <div className="min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Controle de Acesso</h2>
+          <p className="text-sm sm:text-base text-gray-600">Gerenciamento de usuários e permissões</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-sm sm:text-base w-full sm:w-auto">
               <UserPlus className="w-4 h-4 mr-2" />
               Adicionar Usuário
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-lg p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle>Adicionar Novo Usuário</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Adicionar Novo Usuário</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm">
                 Configure o acesso e permissões do novo usuário
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-3 sm:space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="new-name">Nome Completo</Label>
+                <Label htmlFor="new-name" className="text-xs sm:text-sm">Nome Completo</Label>
                 <Input
                   id="new-name"
                   placeholder="Digite o nome"
                   value={newUser.name}
                   onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  className="text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-email">Email</Label>
+                <Label htmlFor="new-email" className="text-xs sm:text-sm">Email</Label>
                 <Input
                   id="new-email"
                   type="email"
                   placeholder="email@universidade.edu.br"
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  className="text-sm"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-role">Perfil de Acesso</Label>
+                <Label htmlFor="new-role" className="text-xs sm:text-sm">Perfil de Acesso</Label>
                 <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value })}>
-                  <SelectTrigger id="new-role">
+                  <SelectTrigger id="new-role" className="text-sm">
                     <SelectValue placeholder="Selecione o perfil" />
                   </SelectTrigger>
                   <SelectContent>

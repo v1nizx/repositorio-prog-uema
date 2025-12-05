@@ -18,19 +18,19 @@ export function Sidebar({ currentView, onViewChange, userRole }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-64 bg-gray-900 text-white flex flex-col">
-      <div className="p-6 border-b border-gray-800">
+    <aside className="w-64 hidden md:flex bg-gray-900 text-white flex-col md:relative fixed md:static inset-y-0 left-0 z-40 md:z-0">
+      <div className="p-4 sm:p-6 border-b border-gray-800">
         <div className="flex items-center gap-2">
-          <BarChart3 className="w-8 h-8 text-blue-400" />
+          <BarChart3 className="w-6 sm:w-8 h-6 sm:h-8 text-blue-400" />
           <div>
-            <h2 className="text-white">PROG</h2>
+            <h2 className="text-sm sm:text-base font-bold text-white">PROG</h2>
             <p className="text-xs text-gray-400">Sistema de Gestão</p>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
+      <nav className="flex-1 p-2 sm:p-4 overflow-y-auto">
+        <ul className="space-y-1 sm:space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const hasAccess = item.roles.includes(userRole);
@@ -42,14 +42,15 @@ export function Sidebar({ currentView, onViewChange, userRole }: SidebarProps) {
                 <button
                   onClick={() => onViewChange(item.id as any)}
                   className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                    "w-full flex items-center gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-colors text-sm sm:text-base",
                     currentView === item.id
                       ? "bg-blue-600 text-white"
                       : "text-gray-300 hover:bg-gray-800"
                   )}
+                  title={item.label}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
+                  <Icon className="w-4 sm:w-5 h-4 sm:h-5 flex-shrink-0" />
+                  <span className="hidden sm:inline">{item.label}</span>
                 </button>
               </li>
             );
@@ -57,8 +58,8 @@ export function Sidebar({ currentView, onViewChange, userRole }: SidebarProps) {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-gray-800">
-        <div className="bg-gray-800 rounded-lg p-4">
+      <div className="p-2 sm:p-4 border-t border-gray-800">
+        <div className="bg-gray-800 rounded-lg p-3 sm:p-4">
           <p className="text-xs text-gray-400 mb-2">Armazenamento</p>
           <div className="flex items-center gap-2 mb-2">
             <div className="flex-1 bg-gray-700 rounded-full h-2">

@@ -44,19 +44,19 @@ export function Login({ onLoginSuccess, onSwitchToSignup }: LoginProps) {
   const isFormValid = username.trim() && password.trim();
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-blue-800">
-      <div className="w-full max-w-md px-4">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 px-4 py-8">
+      <div className="w-full max-w-md">
         {/* Card de Login */}
-        <div className="bg-white rounded-lg shadow-2xl p-8">
+        <div className="bg-white rounded-lg shadow-2xl p-6 sm:p-8">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <LogIn className="w-8 h-8 text-blue-600" aria-hidden="true" />
+          <div className="text-center mb-6 sm:mb-8">
+            <div className="flex justify-center mb-3 sm:mb-4">
+              <div className="bg-blue-100 p-2 sm:p-3 rounded-lg">
+                <LogIn className="w-6 sm:w-8 h-6 sm:h-8 text-blue-600" aria-hidden="true" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Gestão de PPCs</h1>
-            <p className="text-gray-600 mt-2">Sistema Acadêmico da Universidade</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestão de PPCs</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-2">Sistema Acadêmico da Universidade</p>
           </div>
 
           {/* Error Alert */}
@@ -161,8 +161,8 @@ export function Login({ onLoginSuccess, onSwitchToSignup }: LoginProps) {
         </div>
 
         {/* Sistema Info */}
-        <div className="text-center mt-6 text-white text-sm">
-          <p>© 2025 - Sistema de Gestão Acadêmica</p>
+        <div className="text-center mt-4 sm:mt-6 text-white text-xs sm:text-sm">
+          <p>© 2024 - Sistema de Gestão Acadêmica</p>
           <p>Universidade Estadual do Maranhão</p>
         </div>
       </div>

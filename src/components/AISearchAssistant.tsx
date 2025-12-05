@@ -101,15 +101,15 @@ export function AISearchAssistant() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-purple-600 rounded-lg">
-            <Brain className="w-6 h-6 text-white" aria-hidden="true" />
+    <div className="space-y-4 sm:space-y-6">
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-4">
+          <div className="p-2 bg-purple-600 rounded-lg flex-shrink-0">
+            <Brain className="w-5 sm:w-6 h-5 sm:h-6 text-white" aria-hidden="true" />
           </div>
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Assistente de Busca Inteligente</h2>
-            <p className="text-sm text-gray-600">
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Assistente de Busca Inteligente</h2>
+            <p className="text-xs sm:text-sm text-gray-600">
               Faça perguntas em linguagem natural sobre documentos acadêmicos
             </p>
           </div>
@@ -119,7 +119,7 @@ export function AISearchAssistant() {
           <div>
             <label 
               htmlFor="ai-search-textarea"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-xs sm:text-sm font-medium text-gray-700 mb-2"
             >
               Sua Pergunta
             </label>
@@ -129,7 +129,7 @@ export function AISearchAssistant() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               rows={3}
-              className="w-full resize-none"
+              className="w-full resize-none text-sm"
               disabled={isAnalyzing}
               aria-required="true"
               aria-label="Digite sua pergunta sobre documentos acadêmicos"
@@ -147,7 +147,7 @@ export function AISearchAssistant() {
             <Button
               onClick={analyzeQuery}
               disabled={!query.trim() || isAnalyzing}
-              className="bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              className="bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 text-sm sm:text-base"
               aria-busy={isAnalyzing}
               aria-label={isAnalyzing ? 'Analisando sua pergunta com IA' : 'Analisar pergunta com Gemini'}
             >
