@@ -9,12 +9,12 @@ interface SidebarProps {
 
 export function Sidebar({ currentView, onViewChange, userRole }: SidebarProps) {
   const menuItems = [
-    { id: 'documents', label: 'Documentos', icon: FileText, roles: ['Administrador', 'Editor', 'Consultor', 'admin', 'coordenador', 'usuario'] },
-    { id: 'search', label: 'Busca Avançada', icon: Search, roles: ['Administrador', 'Editor', 'Consultor', 'admin', 'coordenador', 'usuario'] },
-    { id: 'ppc', label: 'Gestão de PPCs', icon: BookOpen, roles: ['Administrador', 'Editor', 'admin', 'coordenador'] },
-    { id: 'upload', label: 'Upload', icon: Upload, roles: ['Administrador', 'Editor', 'admin', 'coordenador'] },
-    { id: 'access', label: 'Controle de Acesso', icon: Shield, roles: ['Administrador', 'admin'] },
-    { id: 'profile', label: 'Meu Perfil', icon: FileText, roles: ['Administrador', 'Editor', 'Consultor', 'admin', 'coordenador', 'usuario'] },
+    { id: 'documents', label: 'Documentos', icon: FileText, roles: ['admin', 'coordenador', 'usuario'] },
+    { id: 'search', label: 'Busca Avançada', icon: Search, roles: ['admin', 'coordenador', 'usuario'] },
+    { id: 'ppc', label: 'Gestão de PPCs', icon: BookOpen, roles: ['admin', 'coordenador'] },
+    { id: 'upload', label: 'Upload', icon: Upload, roles: ['admin', 'coordenador'] },
+    { id: 'access', label: 'Controle de Acesso', icon: Shield, roles: ['admin'] },
+    { id: 'profile', label: 'Meu Perfil', icon: FileText, roles: ['admin', 'coordenador', 'usuario'] },
   ];
 
   return (

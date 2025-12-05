@@ -1,7 +1,8 @@
 // Configuração da IA Gemini
+// NOTA: A chave de API não deve ser pública. Use GEMINI_API_KEY (privada)
 export const aiConfig = {
-  apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
-  model: 'gemini-pro',
+  apiKey: process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+  model: 'gemini-2.5-flash',
   generationConfig: {
     temperature: 0.7,
     topK: 40,

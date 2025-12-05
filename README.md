@@ -397,6 +397,7 @@ CREATE TABLE perfis_usuario (
 - **Node.js** 18+ 
 - **npm** ou **yarn**
 - Chave do **Firebase** (configurada)
+- Chave do **Gemini API** (para busca com IA) - Obtém em https://aistudio.google.com/apikey
 
 ### Instalação Rápida
 
@@ -455,7 +456,7 @@ FIREBASE_ADMIN_SDK_KEY=sua_chave_admin_json
 
 # Gemini AI Config (para busca inteligente)
 # Gere uma nova chave em: https://aistudio.google.com/apikey
-GEMINI_API_KEY=sua_nova_chave_gemini
+GEMINI_API_KEY=sua_chave_gemini_aqui
 ```
 
 ### 🤖 Configuração da IA (Gemini)
@@ -505,7 +506,8 @@ Veja: **GEMINI_API_KEY_FIX.md** para mais informações sobre resolução de pro
 ### ✅ Completamente Funcional
 - 📄 **Upload de documentos** com validação
 - 🔍 **Busca e filtros** avançados
-- 👤 **Autenticação** com Firebase
+- 🤖 **Assistente de Busca IA** com Gemini (busca por linguagem natural)
+- 👤 **Autenticação** com Firebase (Login/Signup/Logout)
 - 🔐 **Controle de acesso** por perfis
 - 📋 **Lista de documentos** com paginação
 - 💾 **Versionamento** automático
@@ -513,9 +515,10 @@ Veja: **GEMINI_API_KEY_FIX.md** para mais informações sobre resolução de pro
 - 📊 **Logs de auditoria**
 - 🎨 **Interface responsiva** (mobile/tablet/desktop)
 - ⚡ **Performance otimizada**
+- ♿ **Acessibilidade WCAG 2.1 AA** em componentes críticos
+- 👤 **Sistema de Perfil de Usuário** com opção de deletar conta
 
 ### 🚧 Em Desenvolvimento
-- 🤖 Integração com IA para buscas inteligentes
 - 📈 Dashboard de estatísticas avançadas
 - 📧 Notificações por email
 - 🔄 Sincronização em tempo real
@@ -526,6 +529,90 @@ Veja: **GEMINI_API_KEY_FIX.md** para mais informações sobre resolução de pro
 - Mobile app (React Native)
 - API GraphQL
 - Análise de dados
+
+## 📈 Melhorias Recentes (Dezembro 2025)
+
+### ✨ Novas Funcionalidades de Autenticação
+
+#### Sistema de Registro (Signup)
+- 📝 Novo componente `Signup.tsx` com formulário completo
+- ✅ Validações client-side em tempo real
+- ✅ Validações server-side para segurança
+- ✅ Detecção de username/email duplicados
+- ✅ Toggle de mostrar/ocultar senhas
+- ✅ Acessibilidade WCAG AA implementada
+
+#### Sistema de Deleção de Conta
+- 🗑️ Modal de confirmação de deleção
+- ✅ Validação de senha antes de deletar
+- ✅ Ação irreversível com avisos claros
+- ✅ Limpeza automática de localStorage após deleção
+- ✅ Logout automático após exclusão
+
+#### API Endpoints Novos
+```
+POST   /api/auth/signup           # Criar nova conta
+DELETE /api/auth/delete-account   # Deletar conta do usuário
+```
+
+### 🎨 Melhorias de Acessibilidade
+
+#### Login Component
+- ✅ ARIA labels em todos os inputs
+- ✅ Botão de mostrar/ocultar senha acessível
+- ✅ Focus states visíveis
+- ✅ Role="alert" em mensagens de erro
+- ✅ Aria-live para atualizações dinâmicas
+
+#### Signup Component
+- ✅ Todos os elementos do Login PLUS validações
+- ✅ Aria-describedby para dicas de requisitos
+- ✅ Sugestões claras (3+ chars username, 6+ chars senha)
+
+#### AISearchAssistant Component
+- ✅ H2 semântico para heading
+- ✅ Role="region" em seções de resultados
+- ✅ Role="article" em cada resultado
+- ✅ Aria-labels descritivos em botões
+- ✅ Aria-live para resultados dinâmicos
+- ✅ Aria-hidden em ícones decorativos
+- ✅ Aria-busy durante processamento
+
+#### UserProfile Component
+- ✅ Modal com role="dialog"
+- ✅ Aria-modal="true" e aria-labelledby
+- ✅ Role="alert" e aria-live em mensagens
+- ✅ Aria-required em campos obrigatórios
+
+### 📊 Estatísticas de Código
+
+```
+Novos Componentes: 2 (Signup.tsx, AuthPage.tsx)
+Componentes Atualizados: 3 (Login, UserProfile, AISearchAssistant)
+Novo Endpoints: 2 (/signup, /delete-account)
+Métodos AuthContext: +2 (signup, deleteAccount)
+Linhas de Acessibilidade Adicionadas: 150+
+Testes Sugeridos: 40+ cenários diferentes
+```
+
+### 🧪 Como Testar as Novas Funcionalidades
+
+#### Criar Conta
+1. Clique em "Registre-se" na tela de login
+2. Preencha: Nome, Email, Username, Senha
+3. Validações aparecem em tempo real
+4. Clique em "Criar Conta"
+5. Sistema faz login automático
+
+#### Deletar Conta
+1. Faça login
+2. Acesse "Meu Perfil"
+3. Localize "Zona de Perigo"
+4. Clique em "Deletar Minha Conta"
+5. Digite sua senha para confirmar
+6. Clique em "Deletar Conta"
+
+**Veja: GUIA_TESTES.md para testes completos**
 
 ## 🧹 Limpeza Recente (Novembro 2025)
 
@@ -556,18 +643,23 @@ Veja: **GEMINI_API_KEY_FIX.md** para mais informações sobre resolução de pro
 ## 🔐 Segurança & Conformidade
 
 ### Implementado
-- ✅ Autenticação por JWT
+- ✅ Autenticação por JWT (Firebase)
+- ✅ Sistema de Cadastro (Signup) com validações
+- ✅ Sistema de Deleção de Conta com confirmação de senha
 - ✅ Controle de acesso baseado em papéis (RBAC)
-- ✅ Validação de entrada em formulários
+- ✅ Validação de entrada em formulários (client + server)
 - ✅ Proteção contra XSS/CSRF
 - ✅ Logs de auditoria completos
 - ✅ Criptografia em trânsito (HTTPS)
+- ✅ Acessibilidade WCAG 2.1 AA em componentes de autenticação
 
 ### Recomendações
-- 🔒 Implementar CORS adequadamente
-- 🔒 Usar HTTPS em produção
+- 🔒 Implementar bcrypt para hash de senhas (atualmente plain text em dev)
+- 🔒 Implementar JWT com tokens com expiração
+- 🔒 Usar CORS adequadamente
+- 🔒 HTTPS obrigatório em produção
 - 🔒 Realizar auditorias de segurança
-- 🔒 Implementar rate limiting
+- 🔒 Rate limiting em endpoints de auth
 - 🔒 Backup regular de dados
 
 ## 📚 Documentação Adiciononal
@@ -718,6 +810,9 @@ Para suporte, entre em contato com a equipe PROG/UEMA.
 - 🔑 [Configuração de Autenticação](./AUTH_SETUP.md)
 - 📦 [Sistema de Upload](./UPLOAD_SYSTEM_README.md)
 - 💾 [Configuração de Armazenamento](./STORAGE_SETUP.md)
+- 🧪 [Guia de Testes](./GUIA_TESTES.md)
+- 📋 [Resumo Técnico](./RESUMO_TECNICO.md)
+- ✨ [Melhorias Implementadas](./MELHORIAS_IMPLEMENTADAS.md)
 - 📊 [Análise de Viabilidade](./docs/01-planejamento/analise-viabilidade.md)
 
 ---

@@ -8,7 +8,7 @@ import { SearchPanel } from './components/SearchPanel';
 import { AccessControl } from './components/AccessControl';
 import { UserProfile } from './components/UserProfile';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { Login } from './components/Login';
+import { AuthPage } from './components/AuthPage';
 import { useAuth } from './hooks/useAuth';
 
 export default function App() {
@@ -41,9 +41,9 @@ export default function App() {
     );
   }
 
-  // Tela de login
+  // Tela de login/signup
   if (!isAuthenticated || !user) {
-    return <Login />;
+    return <AuthPage />;
   }
 
   return (

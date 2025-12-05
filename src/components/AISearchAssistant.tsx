@@ -105,10 +105,10 @@ export function AISearchAssistant() {
       <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-purple-600 rounded-lg">
-            <Brain className="w-6 h-6 text-white" />
+            <Brain className="w-6 h-6 text-white" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="text-gray-900">Assistente de Busca Inteligente</h3>
+            <h2 className="text-xl font-semibold text-gray-900">Assistente de Busca Inteligente</h2>
             <p className="text-sm text-gray-600">
               Faça perguntas em linguagem natural sobre documentos acadêmicos
             </p>
@@ -117,30 +117,48 @@ export function AISearchAssistant() {
 
         <div className="space-y-4">
           <div>
+            <label 
+              htmlFor="ai-search-textarea"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Sua Pergunta
+            </label>
             <Textarea
+              id="ai-search-textarea"
               placeholder="Ex: Quais PPCs foram atualizados nos últimos 6 meses?"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               rows={3}
               className="w-full resize-none"
               disabled={isAnalyzing}
+              aria-required="true"
+              aria-label="Digite sua pergunta sobre documentos acadêmicos"
+              aria-describedby="ai-search-help"
             />
+            <p 
+              id="ai-search-help"
+              className="text-xs text-gray-500 mt-1"
+            >
+              Use linguagem natural para fazer sua pergunta sobre documentos académicos.
+            </p>
           </div>
 
           <div className="flex gap-2">
             <Button
               onClick={analyzeQuery}
               disabled={!query.trim() || isAnalyzing}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              aria-busy={isAnalyzing}
+              aria-label={isAnalyzing ? 'Analisando sua pergunta com IA' : 'Analisar pergunta com Gemini'}
             >
               {isAnalyzing ? (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
+                  <Sparkles className="w-4 h-4 mr-2 animate-pulse" aria-hidden="true" />
                   Analisando com IA...
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
                   Analisar com Gemini
                 </>
               )}
@@ -153,19 +171,27 @@ export function AISearchAssistant() {
                 setError(null);
               }}
               disabled={isAnalyzing}
+              aria-label="Limpar consulta"
+              className="focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
             >
               Limpar
             </Button>
           </div>
 
           <div>
-            <p className="text-xs text-gray-600 mb-2">Exemplos de consultas:</p>
+            <p 
+              className="text-xs text-gray-600 mb-2"
+              id="example-queries"
+            >
+              Exemplos de consultas:
+            </p>
             <div className="flex flex-wrap gap-2">
               {exampleQueries.map((example, index) => (
                 <button
                   key={index}
                   onClick={() => setQuery(example)}
-                  className="text-xs bg-white border border-purple-200 px-3 py-1.5 rounded-full hover:bg-purple-50 transition-colors text-gray-700"
+                  className="text-xs bg-white border border-purple-200 px-3 py-1.5 rounded-full hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 transition-colors text-gray-700"
+                  aria-label={`Usar exemplo: ${example}`}
                 >
                   {example}
                 </button>
@@ -176,8 +202,13 @@ export function AISearchAssistant() {
       </div>
 
       {error && (
-        <Alert className="bg-red-50 border-red-200 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <AlertCircle className="w-4 h-4 text-red-600" />
+        <Alert 
+          className="bg-red-50 border-red-200 animate-in fade-in slide-in-from-bottom-4 duration-500"
+          role="alert"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <AlertCircle className="w-4 h-4 text-red-600" aria-hidden="true" />
           <AlertDescription className="text-red-700">
             {error}
           </AlertDescription>
@@ -189,13 +220,13 @@ export function AISearchAssistant() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Brain className="w-5 h-5 text-purple-600" />
+                <Brain className="w-5 h-5 text-purple-600" aria-hidden="true" />
                 Interpretação da Consulta
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Alert className="bg-purple-50 border-purple-200">
-                <Sparkles className="w-4 h-4 text-purple-600" />
+                <Sparkles className="w-4 h-4 text-purple-600" aria-hidden="true" />
                 <AlertDescription className="text-purple-900">
                   {analysis.interpretation}
                 </AlertDescription>
@@ -206,7 +237,7 @@ export function AISearchAssistant() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ArrowRight className="w-5 h-5 text-blue-600" />
+                <ArrowRight className="w-5 h-5 text-blue-600" aria-hidden="true" />
                 Entidades Identificadas
               </CardTitle>
               <CardDescription>
@@ -217,10 +248,16 @@ export function AISearchAssistant() {
               <div className="space-y-4">
                 {analysis.entities.documentTypes && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Tipos de Documento:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Tipos de Documento:</p>
                     <div className="flex flex-wrap gap-2">
                       {analysis.entities.documentTypes.map((type, index) => (
-                        <Badge key={index} variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                        <Badge 
+                          key={index} 
+                          variant="outline" 
+                          className="bg-blue-100 text-blue-800 border-blue-200"
+                          role="status"
+                          aria-label={`Tipo de documento: ${type}`}
+                        >
                           {type}
                         </Badge>
                       ))}
@@ -230,10 +267,16 @@ export function AISearchAssistant() {
 
                 {analysis.entities.courses && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Cursos:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Cursos:</p>
                     <div className="flex flex-wrap gap-2">
                       {analysis.entities.courses.map((course, index) => (
-                        <Badge key={index} variant="outline" className="bg-green-100 text-green-800 border-green-200">
+                        <Badge 
+                          key={index} 
+                          variant="outline" 
+                          className="bg-green-100 text-green-800 border-green-200"
+                          role="status"
+                          aria-label={`Curso: ${course}`}
+                        >
                           {course}
                         </Badge>
                       ))}
@@ -243,10 +286,16 @@ export function AISearchAssistant() {
 
                 {analysis.entities.sectors && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Setores:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Setores:</p>
                     <div className="flex flex-wrap gap-2">
                       {analysis.entities.sectors.map((sector, index) => (
-                        <Badge key={index} variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">
+                        <Badge 
+                          key={index} 
+                          variant="outline" 
+                          className="bg-orange-100 text-orange-800 border-orange-200"
+                          role="status"
+                          aria-label={`Setor: ${sector}`}
+                        >
                           {sector}
                         </Badge>
                       ))}
@@ -256,10 +305,16 @@ export function AISearchAssistant() {
 
                 {analysis.entities.status && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Status:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Status:</p>
                     <div className="flex flex-wrap gap-2">
                       {analysis.entities.status.map((status, index) => (
-                        <Badge key={index} variant="outline" className={getStatusColor(status)}>
+                        <Badge 
+                          key={index} 
+                          variant="outline" 
+                          className={getStatusColor(status)}
+                          role="status"
+                          aria-label={`Status: ${status}`}
+                        >
                           {status}
                         </Badge>
                       ))}
@@ -269,8 +324,13 @@ export function AISearchAssistant() {
 
                 {analysis.entities.dateRange && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Período:</p>
-                    <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-200">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Período:</p>
+                    <Badge 
+                      variant="outline" 
+                      className="bg-purple-100 text-purple-800 border-purple-200"
+                      role="status"
+                      aria-label={`Período: ${analysis.entities.dateRange}`}
+                    >
                       {analysis.entities.dateRange}
                     </Badge>
                   </div>
@@ -278,10 +338,16 @@ export function AISearchAssistant() {
 
                 {analysis.entities.keywords && analysis.entities.keywords.length > 0 && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">Palavras-chave:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Palavras-chave:</p>
                     <div className="flex flex-wrap gap-2">
                       {analysis.entities.keywords.map((keyword, index) => (
-                        <Badge key={index} variant="outline" className="bg-gray-100 text-gray-800 border-gray-200">
+                        <Badge 
+                          key={index} 
+                          variant="outline" 
+                          className="bg-gray-100 text-gray-800 border-gray-200"
+                          role="status"
+                          aria-label={`Palavra-chave: ${keyword}`}
+                        >
                           {keyword}
                         </Badge>
                       ))}
@@ -295,16 +361,21 @@ export function AISearchAssistant() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Database className="w-5 h-5 text-green-600" />
+                <Database className="w-5 h-5 text-green-600" aria-hidden="true" />
                 Filtros Aplicados
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {analysis.filters.map((filter, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div 
+                    key={index} 
+                    className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                    role="status"
+                    aria-label={`Filtro: ${filter.label} igual a ${filter.value}`}
+                  >
                     <div className="flex-1">
-                      <p className="text-xs text-gray-600">{filter.label}</p>
+                      <p className="text-xs text-gray-600 font-medium">{filter.label}</p>
                       <p className="text-sm text-gray-900">{filter.value}</p>
                     </div>
                   </div>
@@ -317,23 +388,24 @@ export function AISearchAssistant() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  <Database className="w-5 h-5 text-blue-600" />
+                  <Database className="w-5 h-5 text-blue-600" aria-hidden="true" />
                   Query SQL Otimizada
                 </CardTitle>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={copySQL}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  aria-label={sqlCopied ? 'SQL copiado para a área de transferência' : 'Copiar SQL para a área de transferência'}
                 >
                   {sqlCopied ? (
                     <>
-                      <Check className="w-4 h-4 text-green-600" />
+                      <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
                       Copiado!
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-4 h-4" aria-hidden="true" />
                       Copiar SQL
                     </>
                   )}
@@ -345,7 +417,11 @@ export function AISearchAssistant() {
             </CardHeader>
             <CardContent>
               <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
-                <pre className="text-sm text-green-400 font-mono whitespace-pre-wrap">
+                <pre 
+                  className="text-sm text-green-400 font-mono whitespace-pre-wrap"
+                  aria-label="SQL Query resultante"
+                  role="region"
+                >
                   {analysis.sqlQuery}
                 </pre>
               </div>
@@ -356,7 +432,7 @@ export function AISearchAssistant() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-600" />
+                  <FileText className="w-5 h-5 text-blue-600" aria-hidden="true" />
                   Resultados da Busca
                 </CardTitle>
                 <CardDescription>
@@ -364,45 +440,69 @@ export function AISearchAssistant() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4" role="region" aria-label="Resultados da busca">
                   {analysis.results.map((result) => (
                     <div
                       key={result.id}
-                      className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition-shadow"
+                      className="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:shadow-md transition-shadow focus-within:ring-2 focus-within:ring-blue-500"
+                      role="article"
+                      aria-label={`Documento: ${result.title}`}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h4 className="text-gray-900">{result.title}</h4>
-                            <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
+                            <h3 className="text-gray-900 font-semibold">{result.title}</h3>
+                            <Badge 
+                              variant="outline" 
+                              className="bg-blue-100 text-blue-800 border-blue-200"
+                              role="status"
+                              aria-label={`Tipo: ${result.type}`}
+                            >
                               {result.type}
                             </Badge>
-                            <Badge variant="outline" className={getStatusColor(result.status)}>
+                            <Badge 
+                              variant="outline" 
+                              className={getStatusColor(result.status)}
+                              role="status"
+                              aria-label={`Status: ${result.status}`}
+                            >
                               {result.status}
                             </Badge>
                           </div>
                           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
                             {result.course && (
                               <span className="flex items-center gap-1">
-                                <FileText className="w-3 h-3" />
+                                <FileText className="w-3 h-3" aria-hidden="true" />
                                 {result.course}
                               </span>
                             )}
-                            <span>v{result.version}</span>
-                            <span>·</span>
-                            <span>{new Date(result.date).toLocaleDateString('pt-BR')}</span>
-                            <span>·</span>
-                            <span>{result.author}</span>
-                            <span>·</span>
-                            <span className="text-xs">{result.sector}</span>
+                            <span aria-label={`Versão ${result.version}`}>v{result.version}</span>
+                            <span aria-hidden="true">·</span>
+                            <span aria-label={`Data: ${new Date(result.date).toLocaleDateString('pt-BR')}`}>
+                              {new Date(result.date).toLocaleDateString('pt-BR')}
+                            </span>
+                            <span aria-hidden="true">·</span>
+                            <span aria-label={`Autor: ${result.author}`}>{result.author}</span>
+                            <span aria-hidden="true">·</span>
+                            <span className="text-xs" aria-label={`Setor: ${result.sector}`}>{result.sector}</span>
                           </div>
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          aria-label={`Visualizar documento: ${result.title}`}
+                          className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
                           Visualizar
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          aria-label={`Baixar documento: ${result.title}`}
+                          className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
                           Baixar
                         </Button>
                       </div>
@@ -414,7 +514,7 @@ export function AISearchAssistant() {
           )}
 
           {analysis.results.length === 0 && (
-            <Alert>
+            <Alert role="status" aria-live="polite">
               <AlertDescription>
                 Nenhum resultado encontrado com os critérios especificados. Tente ajustar sua consulta.
               </AlertDescription>

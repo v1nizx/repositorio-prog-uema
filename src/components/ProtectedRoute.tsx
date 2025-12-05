@@ -52,10 +52,10 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
         </div>
         <Alert className="bg-red-50 border-red-200">
           <AlertCircle className="w-4 h-4 text-red-600" />
-          <AlertDescription className="text-red-800">
-            Apenas usuários com o perfil de <strong>{allowedRoles.join(', ')}</strong> podem acessar esta área.
-            Seu perfil atual é: <strong>{user.role}</strong>
-          </AlertDescription>
+        <AlertDescription className="text-red-800">
+          Apenas usuários com o perfil de <strong>{allowedRoles.join(', ')}</strong> podem acessar esta área.
+          Seu perfil atual é: <strong>{user.role}</strong>
+        </AlertDescription>
         </Alert>
       </div>
     );

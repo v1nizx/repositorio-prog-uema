@@ -57,7 +57,11 @@ export function Header({ user, onLogout, onProfileClick }: HeaderProps) {
               </Avatar>
               <div className="text-left">
                 <p className="text-sm text-gray-900">{user.name}</p>
-                <p className="text-xs text-gray-500">{user.role}</p>
+                <p className="text-xs text-gray-500">
+                  {user.role === 'admin' ? 'Administrador' : 
+                   user.role === 'coordenador' ? 'Coordenador' : 
+                   user.role === 'usuario' ? 'Usuário' : user.role}
+                </p>
               </div>
               <ChevronDown className="w-4 h-4 text-gray-600" />
             </button>

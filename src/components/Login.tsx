@@ -1,16 +1,22 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { LogIn, AlertCircle } from 'lucide-react';
+import { LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 
-export function Login() {
+interface LoginProps {
+  onLoginSuccess?: () => void;
+  onSwitchToSignup?: () => void;
+}
+
+export function Login({ onLoginSuccess, onSwitchToSignup }: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error, clearError } = useAuth();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -24,9 +30,9 @@ export function Login() {
     const success = await login({ username, password });
 
     if (success) {
-      // O componente pai (App) será notificado e o redirecionará
       setUsername('');
       setPassword('');
+      onLoginSuccess?.();
     }
   };
 
@@ -35,16 +41,18 @@ export function Login() {
     window.location.reload();
   };
 
+  const isFormValid = username.trim() && password.trim();
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-600 to-blue-800">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md px-4">
         {/* Card de Login */}
         <div className="bg-white rounded-lg shadow-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <div className="bg-blue-100 p-3 rounded-lg">
-                <LogIn className="w-8 h-8 text-blue-600" />
+                <LogIn className="w-8 h-8 text-blue-600" aria-hidden="true" />
               </div>
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Gestão de PPCs</h1>
@@ -53,8 +61,13 @@ export function Login() {
 
           {/* Error Alert */}
           {error && (
-            <Alert className="bg-red-50 border-red-200 mb-6">
-              <AlertCircle className="w-4 h-4 text-red-600" />
+            <Alert 
+              className="bg-red-50 border-red-200 mb-6"
+              role="alert"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <AlertCircle className="w-4 h-4 text-red-600" aria-hidden="true" />
               <AlertDescription className="text-red-800">
                 {error}
               </AlertDescription>
@@ -64,7 +77,10 @@ export function Login() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="font-medium text-gray-700">
+              <Label 
+                htmlFor="username" 
+                className="font-medium text-gray-700"
+              >
                 Usuário
               </Label>
               <Input
@@ -76,59 +92,77 @@ export function Login() {
                 disabled={isLoading}
                 className="w-full"
                 autoFocus
+                aria-required="true"
+                aria-label="Usuário"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="font-medium text-gray-700">
+              <Label 
+                htmlFor="password" 
+                className="font-medium text-gray-700"
+              >
                 Senha
               </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Digite sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-                className="w-full"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Digite sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full pr-10"
+                  aria-required="true"
+                  aria-label="Senha"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                  aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  aria-pressed={showPassword}
+                  tabIndex={0}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" aria-hidden="true" />
+                  ) : (
+                    <Eye className="w-4 h-4" aria-hidden="true" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <Button
               type="submit"
-              disabled={isLoading || !username.trim() || !password.trim()}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors"
+              disabled={isLoading || !isFormValid}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              aria-busy={isLoading}
             >
               {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
 
-          {/* Footer Info */}
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p className="mb-2">Credenciais de teste:</p>
-            <div className="bg-gray-50 rounded p-3 text-left space-y-1">
-              <p>
-                <strong>Admin:</strong> admin / admin123
-              </p>
-              <p>
-                <strong>Coordenador:</strong> coordenador / coord123
-              </p>
-              <p>
-                <strong>Usuário:</strong> usuario / user123
-              </p>
-            </div>
-            <button
-              onClick={handleClearStorage}
-              className="mt-4 text-xs text-blue-600 hover:text-blue-700 underline"
-            >
-              Limpar dados de sessão
-            </button>
+          {/* Signup Link */}
+          <div className="mt-6 text-center border-t pt-6">
+            <p className="text-gray-600 mb-3">
+              Não tem conta?{' '}
+              <button
+                onClick={onSwitchToSignup}
+                className="text-blue-600 hover:text-blue-800 font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-1"
+                aria-label="Ir para tela de registro"
+              >
+                Registre-se
+              </button>
+            </p>
           </div>
+
+
         </div>
 
         {/* Sistema Info */}
         <div className="text-center mt-6 text-white text-sm">
-          <p>© 2024 - Sistema de Gestão Acadêmica</p>
+          <p>© 2025 - Sistema de Gestão Acadêmica</p>
           <p>Universidade Estadual do Maranhão</p>
         </div>
       </div>

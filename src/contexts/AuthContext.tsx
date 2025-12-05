@@ -6,9 +6,18 @@ import { User, LoginCredentials, AuthState } from '@/types/user';
 
 const STORAGE_KEY = 'app_user';
 
+interface SignupCredentials {
+  username: string;
+  password: string;
+  name: string;
+  email: string;
+}
+
 interface AuthContextType extends AuthState {
   login: (credentials: LoginCredentials) => Promise<boolean>;
   logout: () => Promise<boolean>;
+  signup: (credentials: SignupCredentials) => Promise<boolean>;
+  deleteAccount: (password: string) => Promise<boolean>;
   clearError: () => void;
 }
 
@@ -132,6 +141,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const signup = useCallback(async (credentials: SignupCredentials) => {
+    try {
+      console.log('📝 Iniciando registro para:', credentials.username);
+      setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      const response = await axios.post('/api/auth/signup', credentials);
+
+      if (response.data.success && response.data.user) {
+        const user = response.data.user as User;
+        console.log('✅ Registro bem-sucedido:', user.username);
+        
+        setAuthState({
+          isAuthenticated: true,
+          user,
+          isLoading: false,
+          error: null,
+        });
+
+        return true;
+      }
+
+      throw new Error(response.data.error || 'Erro ao criar conta');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar conta';
+      console.error('❌ Erro no registro:', errorMessage);
+      setAuthState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return false;
+    }
+  }, []);
+
+  const deleteAccount = useCallback(async (password: string) => {
+    try {
+      if (!authState.user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      console.log('🗑️ Iniciando exclusão de conta para:', authState.user.id);
+      setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+      const response = await axios.delete('/api/auth/delete-account', {
+        data: {
+          userId: authState.user.id,
+          password,
+        },
+      });
+
+      if (response.data.success) {
+        console.log('✅ Conta deletada com sucesso');
+        
+        // Limpar estado e localStorage
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('app_user_old');
+
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          isLoading: false,
+          error: null,
+        });
+
+        return true;
+      }
+
+      throw new Error(response.data.error || 'Erro ao deletar conta');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao deletar conta';
+      console.error('❌ Erro ao deletar conta:', errorMessage);
+      setAuthState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return false;
+    }
+  }, [authState.user]);
+
   const clearError = useCallback(() => {
     setAuthState((prev) => ({ ...prev, error: null }));
   }, []);
@@ -140,6 +229,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ...authState,
     login,
     logout,
+    signup,
+    deleteAccount,
     clearError,
   };
 

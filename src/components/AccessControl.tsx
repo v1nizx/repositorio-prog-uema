@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, UserPlus, Eye, Lock, Activity, Loader } from 'lucide-react';
+import { Shield, UserPlus, Eye, Lock, Activity, Loader, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
@@ -28,12 +28,17 @@ import {
   DialogTrigger,
 } from './ui/dialog';
 import { Label } from './ui/label';
+import { Alert, AlertDescription } from './ui/alert';
 import { useAccessControl } from '@/hooks/useAccessControl';
 
 
 
 export function AccessControl() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -60,6 +65,71 @@ export function AccessControl() {
         return 'bg-green-100 text-green-800 border-green-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const handleEditUser = (user: any) => {
+    setEditingUser(user);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingUser) return;
+    
+    try {
+      const response = await fetch(`/api/users/${editingUser.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: editingUser.name,
+          email: editingUser.email,
+          role: editingUser.role,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('✅ Usuário atualizado com sucesso:', data);
+        setIsEditDialogOpen(false);
+        setEditingUser(null);
+        await fetchUsers();
+      } else {
+        console.error('❌ Erro ao atualizar usuário:', data.error);
+        alert(`Erro ao atualizar usuário: ${data.error}`);
+      }
+    } catch (err) {
+      console.error('❌ Erro ao salvar usuário:', err);
+      alert('Erro ao salvar usuário');
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!showDeleteConfirm) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/users/${showDeleteConfirm}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('✅ Usuário deletado com sucesso:', data);
+        setShowDeleteConfirm(null);
+        await fetchUsers();
+      } else {
+        console.error('❌ Erro ao deletar usuário:', data.error);
+        alert(`Erro ao deletar usuário: ${data.error}`);
+      }
+    } catch (err) {
+      console.error('❌ Erro ao deletar usuário:', err);
+      alert('Erro ao deletar usuário');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -247,9 +317,26 @@ export function AccessControl() {
                         </p>
                       </TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm">
-                          Editar
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditUser(user)}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            Editar
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setShowDeleteConfirm(user.id)}
+                            className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Deletar
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -355,6 +442,112 @@ export function AccessControl() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Edição de Usuário */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Modifique as informações e permissões do usuário
+            </DialogDescription>
+          </DialogHeader>
+          {editingUser && (
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Nome Completo</Label>
+                <Input
+                  id="edit-name"
+                  placeholder="Digite o nome"
+                  value={editingUser.name}
+                  onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  placeholder="email@universidade.edu.br"
+                  value={editingUser.email}
+                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-role">Perfil de Acesso</Label>
+                <Select value={editingUser.role} onValueChange={(value) => setEditingUser({ ...editingUser, role: value })}>
+                  <SelectTrigger id="edit-role">
+                    <SelectValue placeholder="Selecione o perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="coordenador">Coordenador</SelectItem>
+                    <SelectItem value="usuario">Usuário</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                  className="flex-1"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  onClick={handleSaveEdit}
+                >
+                  Salvar Alterações
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Confirmação de Deleção */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">Deletar Usuário</h3>
+            </div>
+
+            <p className="text-gray-600 mb-4">
+              Tem certeza que deseja deletar este usuário? Esta ação é irreversível e o usuário perderá acesso ao sistema.
+            </p>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-6">
+              <p className="text-sm text-red-800">
+                <strong>Aviso:</strong> Todos os dados e permissões associados a este usuário serão removidos.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(null)}
+                disabled={isDeleting}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleDeleteUser}
+                disabled={isDeleting}
+                aria-busy={isDeleting}
+              >
+                {isDeleting ? 'Deletando...' : 'Deletar Usuário'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
